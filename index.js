@@ -35,6 +35,7 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     const usersCollection = client.db("capital-trust-bank").collection("users");
+    const loansCollection = client.db("capital-trust-bank").collection("loans");
 
     //save users to database
     app.put("/user/:email", async (req, res) => {
@@ -51,6 +52,10 @@ async function run() {
       });
       res.send({ result, Token: token });
     });
+
+    app.get('/loans',async(req,res)=>{
+      res.send('loans working')
+    })
   } finally {
   }
 }
