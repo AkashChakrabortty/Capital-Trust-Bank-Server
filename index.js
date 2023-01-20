@@ -35,8 +35,11 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     const usersCollection = client.db("capital-trust-bank").collection("users");
+    const applierCollection = client
+      .db("capital-trust-bank")
+      .collection("cardAppliers");
 
-    //save users to database
+    // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -47,9 +50,17 @@ async function run() {
       };
       const result = await usersCollection.updateOne(query, updateDoc, option);
       const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
-        expiresIn: "1d",
+        expiresIn: "7d",
       });
       res.send({ result, Token: token });
+    });
+
+    //post applier info in database applierCollection
+    app.post("/cardAppliers", async (req, res) => {
+      const applier = req.body;
+      console.log(applier);
+      const result = await applierCollection.insertOne(applier);
+      res.send(result);
     });
   } finally {
   }
@@ -57,9 +68,9 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("api is running");
+  res.send("Central Trust Bank server is running");
 });
 
 app.listen(port, (req, res) => {
-  console.log(`server is running on port ${port}`);
+  console.log(`Central Trust Bank server is running on port ${port}`);
 });
