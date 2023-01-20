@@ -35,7 +35,9 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     const usersCollection = client.db("capital-trust-bank").collection("users");
-
+    const applierCollection = client
+      .db("capital-trust-bank")
+      .collection("cardAppliers");
     //save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -50,6 +52,14 @@ async function run() {
         expiresIn: "1d",
       });
       res.send({ result, Token: token });
+    });
+
+    //post applier info in database applierCollection
+    app.post("/cardAppliers", async (req, res) => {
+      const applier = req.body;
+      console.log(applier);
+      const result = await applierCollection.insertOne(applier);
+      res.send(result);
     });
   } finally {
   }
