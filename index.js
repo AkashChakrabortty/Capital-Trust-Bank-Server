@@ -38,11 +38,8 @@ async function run() {
     const applierCollection = client
       .db("capital-trust-bank")
       .collection("cardAppliers");
-<<<<<<< HEAD
-=======
     const loansCollection = client.db("capital-trust-bank").collection("loans");
     const applicantsCollection = client.db("capital-trust-bank").collection("applicants");
->>>>>>> c18c1962b30f28fef42199b7057dbd87b216fd87
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -67,14 +64,12 @@ async function run() {
       const result = await applierCollection.insertOne(applier);
       res.send(result);
     });
-<<<<<<< HEAD
-=======
     //--------Loans-------------//
-    app.get('/loans',async(req,res)=>{
+    app.get('/loans', async (req, res) => {
       const query = {};
       const cursor = loansCollection.find(query);
       const result = await cursor.toArray();
-      
+
       res.send(result);
     });
 
@@ -85,20 +80,19 @@ async function run() {
       res.send(service);
     });
 
-    app.get('/applicants',async(req,res)=>{
-      const query ={};
+    app.get('/applicants', async (req, res) => {
+      const query = {};
       const applicants = await applicantsCollection.find(query).toArray();
       res.send(applicants);
-     })
+    })
 
-   app.post('/applicants', async(req,res)=>{
+    app.post('/applicants', async (req, res) => {
       const applicant = req.body;
       console.log(applicant);
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
-   })
+    })
 
->>>>>>> c18c1962b30f28fef42199b7057dbd87b216fd87
   } finally {
   }
 }
@@ -109,9 +103,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, (req, res) => {
-<<<<<<< HEAD
-  console.log(`Central Trust Bank server is running on port ${port}`);
-=======
   console.log(`server is running on port ${port}`);
->>>>>>> c18c1962b30f28fef42199b7057dbd87b216fd87
 });
