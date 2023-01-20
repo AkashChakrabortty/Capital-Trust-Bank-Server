@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 var jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -36,6 +36,7 @@ async function run() {
   try {
     const usersCollection = client.db("capital-trust-bank").collection("users");
     const loansCollection = client.db("capital-trust-bank").collection("loans");
+    const applicantsCollection = client.db("capital-trust-bank").collection("applicants");
 
     //save users to database
     app.put("/user/:email", async (req, res) => {
@@ -53,9 +54,35 @@ async function run() {
       res.send({ result, Token: token });
     });
 
+    //--------Loans-------------//
     app.get('/loans',async(req,res)=>{
-      res.send('loans working')
-    })
+      const query = {};
+      const cursor = loansCollection.find(query);
+      const result = await cursor.toArray();
+      
+      res.send(result);
+    });
+
+    app.get("/loans/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const service = await loansCollection.findOne(query);
+      res.send(service);
+    });
+
+    app.get('/applicants',async(req,res)=>{
+      const query ={};
+      const applicants = await applicantsCollection.find(query).toArray();
+      res.send(applicants);
+     })
+
+   app.post('/applicants', async(req,res)=>{
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await applicantsCollection.insertOne(applicant);
+      res.send(result);
+   })
+
   } finally {
   }
 }
