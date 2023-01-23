@@ -71,7 +71,6 @@ async function run() {
       const query = {};
       const cursor = loansCollection.find(query);
       const result = await cursor.toArray();
-
       res.send(result);
     });
 
