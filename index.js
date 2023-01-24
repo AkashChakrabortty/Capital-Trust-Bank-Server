@@ -81,6 +81,14 @@ async function run() {
       res.send(service);
     });
 
+    //get single customer info
+    app.get("/customer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
     app.get("/applicants", async (req, res) => {
       const query = {};
       const applicants = await applicantsCollection.find(query).toArray();
