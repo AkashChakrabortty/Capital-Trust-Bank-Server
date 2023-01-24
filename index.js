@@ -39,7 +39,9 @@ async function run() {
       .db("capital-trust-bank")
       .collection("cardAppliers");
     const loansCollection = client.db("capital-trust-bank").collection("loans");
-    const applicantsCollection = client.db("capital-trust-bank").collection("applicants");
+    const applicantsCollection = client
+      .db("capital-trust-bank")
+      .collection("applicants");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -65,11 +67,10 @@ async function run() {
       res.send(result);
     });
     //--------Loans-------------//
-    app.get('/loans', async (req, res) => {
+    app.get("/loans", async (req, res) => {
       const query = {};
       const cursor = loansCollection.find(query);
       const result = await cursor.toArray();
-
       res.send(result);
     });
 
@@ -80,19 +81,18 @@ async function run() {
       res.send(service);
     });
 
-    app.get('/applicants', async (req, res) => {
+    app.get("/applicants", async (req, res) => {
       const query = {};
       const applicants = await applicantsCollection.find(query).toArray();
       res.send(applicants);
-    })
+    });
 
-    app.post('/applicants', async (req, res) => {
+    app.post("/applicants", async (req, res) => {
       const applicant = req.body;
       console.log(applicant);
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
-    })
-
+    });
   } finally {
   }
 }
@@ -103,5 +103,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, (req, res) => {
-  console.log(`server is running on port ${port}`);
+  console.log(`Central Trust Bank server is running on port ${port}`);
 });
