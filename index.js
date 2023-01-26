@@ -42,6 +42,7 @@ async function run() {
     const applicantsCollection = client
       .db("capital-trust-bank")
       .collection("applicants");
+    const teamsCollection = client.db('capital-trust-bank').collection('teams')
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -58,6 +59,13 @@ async function run() {
       });
       res.send({ result, Token: token });
     });
+
+    // get teams data from database
+    app.get('/team', async (req, res) => {
+      const query = {};
+      const result = await teamsCollection.find(query).toArray();
+      res.send(result);      
+    })
 
     //post applier info in database applierCollection
     app.post("/cardAppliers", async (req, res) => {
@@ -113,9 +121,9 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Central Trust Bank server is running");
+  res.send("Capital Trust Bank server is running");
 });
 
 app.listen(port, (req, res) => {
-  console.log(`Central Trust Bank server is running on port ${port}`);
+  console.log(`Capital Trust Bank server is running on port ${port}`);
 });
