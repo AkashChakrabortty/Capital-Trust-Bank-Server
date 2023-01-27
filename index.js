@@ -94,6 +94,12 @@ async function run() {
       const info = await usersCollection.find(query).toArray();
       res.send(info);
     });
+    //get all card req
+    app.get("/cardReq", async (req, res) => {
+      const query = {};
+      const applicants = await applierCollection.find(query).toArray();
+      res.send(applicants);
+    });
 
     app.get("/applicants", async (req, res) => {
       const query = {};
