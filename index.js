@@ -148,11 +148,19 @@ async function run() {
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
     });
+    
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
+    //get all customer info
+    app.get("/allCustomers", async (req, res) => {
+      const query = { role: 'customer' };
+      const info = await usersCollection.find(query).toArray();
       res.send(info);
     });
 
