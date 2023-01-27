@@ -41,11 +41,16 @@ async function run() {
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
-    const loansCollection = client.db("capital-trust-bank").collection("loans");
+    const teamsCollection = client.db("capital-trust-bank").collection("teams");
+    const loanServiceDataCollection = client
+      .db("capital-trust-bank")
+      .collection("loanService");
     const applicantsCollection = client
       .db("capital-trust-bank")
       .collection("applicants");
-    const teamsCollection = client.db("capital-trust-bank").collection("teams");
+    const insuranceCollection = client
+      .db("capital-trust-bank")
+      .collection("insuranceApplicants");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -80,7 +85,12 @@ async function run() {
       res.send(result);
     });
     // read data for emergency service req slider
-    app.get("/emergencyServices", async (req, res) => {
+    app.get("/cardReq", async (req, res) => {
+      const query = {};
+      const result = await applierCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/cardAppliers", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
@@ -100,30 +110,30 @@ async function run() {
     //--------Loans-------------//
     app.get("/loans", async (req, res) => {
       const query = {};
-      const cursor = loansCollection.find(query);
+      const cursor = loanServiceDataCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    app.get("/loans/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const service = await loansCollection.findOne(query);
-      res.send(service);
+    //--------Loans-------------//
+    app.get("/loanService", async (req, res) => {
+      const query = {};
+      const cursor = loanServiceDataCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
-    //get single customer info
-    app.get("/customer/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const info = await usersCollection.findOne(query);
-      res.send(info);
+    app.get("/loanService/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const service = await loanServiceDataCollection.findOne(query);
+      res.send(service);
     });
-    //get all customer info
-    app.get("/allCustomers", async (req, res) => {
-      const query = { role: "customer" };
-      const info = await usersCollection.find(query).toArray();
-      res.send(info);
+    //get all card req
+    app.get("/cardReq", async (req, res) => {
+      const query = {};
+      const applicants = await applierCollection.find(query).toArray();
+      res.send(applicants);
     });
 
     app.get("/applicants", async (req, res) => {
@@ -136,6 +146,20 @@ async function run() {
       const applicant = req.body;
       console.log(applicant);
       const result = await applicantsCollection.insertOne(applicant);
+      res.send(result);
+    });
+
+    //--------------Insurance--------------
+    app.get("/insuranceApplicants", async (req, res) => {
+      const query = {};
+      const applicants = await insuranceCollection.find(query).toArray();
+      res.send(applicants);
+    });
+
+    app.post("/insuranceApplicants", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await insuranceCollection.insertOne(applicant);
       res.send(result);
     });
   } finally {
