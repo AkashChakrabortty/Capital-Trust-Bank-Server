@@ -38,10 +38,14 @@ async function run() {
     const applierCollection = client
       .db("capital-trust-bank")
       .collection("cardAppliers");
+    const emergencyServiceCollection = client
+      .db("capital-trust-bank")
+      .collection("emergencyServices");
     const loansCollection = client.db("capital-trust-bank").collection("loans");
     const applicantsCollection = client
       .db("capital-trust-bank")
       .collection("applicants");
+    const teamsCollection = client.db("capital-trust-bank").collection("teams");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -59,13 +63,40 @@ async function run() {
       res.send({ result, Token: token });
     });
 
-    //post applier info in database applier Collection
+    // get teams data from database
+    app.get("/team", async (req, res) => {
+      const query = {};
+      const result = await teamsCollection.find(query).toArray();
+      res.send(result);
+    });
+    /*Start Emon Backend Code  */
+
+    //post applier info in database applierCollection
+    // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
       const applier = req.body;
       console.log(applier);
       const result = await applierCollection.insertOne(applier);
       res.send(result);
     });
+    // read data for emergency service req slider
+    app.get("/emergencyServices", async (req, res) => {
+      const query = {};
+      const result = await emergencyServiceCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/users", async (req, res) => {
+      let query = {};
+      const email = req.query.email;
+      query = {
+        email: req.query.email,
+      };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    /*End Emon Backend Code  */
+
     //--------Loans-------------//
     app.get("/loans", async (req, res) => {
       const query = {};
@@ -79,6 +110,20 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const service = await loansCollection.findOne(query);
       res.send(service);
+    });
+
+    //get single customer info
+    app.get("/customer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+    //get all customer info
+    app.get("/allCustomers", async (req, res) => {
+      const query = { role: "customer" };
+      const info = await usersCollection.find(query).toArray();
+      res.send(info);
     });
 
     app.get("/applicants", async (req, res) => {
@@ -99,9 +144,9 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Central Trust Bank server is running");
+  res.send("Capital Trust Bank server is running");
 });
 
 app.listen(port, (req, res) => {
-  console.log(`Central Trust Bank server is running on port ${port}`);
+  console.log(`Capital Trust Bank server is running on port ${port}`);
 });
