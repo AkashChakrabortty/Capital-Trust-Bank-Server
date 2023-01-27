@@ -129,6 +129,12 @@ async function run() {
       const service = await loanServiceDataCollection.findOne(query);
       res.send(service);
     });
+    //get all card req
+    app.get("/cardReq", async (req, res) => {
+      const query = {};
+      const applicants = await applierCollection.find(query).toArray();
+      res.send(applicants);
+    });
 
     app.get("/applicants", async (req, res) => {
       const query = {};
