@@ -80,7 +80,12 @@ async function run() {
       res.send(result);
     });
     // read data for emergency service req slider
-    app.get("/emergencyServices", async (req, res) => {
+    app.get("/cardReq", async (req, res) => {
+      const query = {};
+      const result = await applierCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/cardAppliers", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
