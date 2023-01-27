@@ -74,6 +74,8 @@ async function run() {
       const result = await teamsCollection.find(query).toArray();
       res.send(result);
     });
+
+    
     /*Start Emon Backend Code  */
 
     //post applier info in database applierCollection
@@ -84,17 +86,24 @@ async function run() {
       const result = await applierCollection.insertOne(applier);
       res.send(result);
     });
+
+
     // read data for emergency service req slider
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
       res.send(result);
     });
+
+
     app.get("/cardAppliers", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
+      console.log('card apply',result)
     });
+
+
     app.get("/users", async (req, res) => {
       let query = {};
       const email = req.query.email;
