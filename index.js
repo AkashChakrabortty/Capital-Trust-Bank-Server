@@ -59,7 +59,7 @@ async function run() {
       res.send({ result, Token: token });
     });
 
-    //post applier info in database applierCollection
+    //post applier info in database applier Collection
     app.post("/cardAppliers", async (req, res) => {
       const applier = req.body;
       console.log(applier);
