@@ -38,6 +38,9 @@ async function run() {
     const applierCollection = client
       .db("capital-trust-bank")
       .collection("cardAppliers");
+    const allAccountsCollection = client
+      .db("capital-trust-bank")
+      .collection("bankAccounts");
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
@@ -74,8 +77,12 @@ async function run() {
       const result = await teamsCollection.find(query).toArray();
       res.send(result);
     });
+
+    
     /*Start Emon Backend Code  */
 
+
+    /*Start Emon Backend Code  */
     //post applier info in database applierCollection
     // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
@@ -84,17 +91,28 @@ async function run() {
       const result = await applierCollection.insertOne(applier);
       res.send(result);
     });
+    app.post("/bankAccounts", async (req, res) => {
+      const account = req.body;
+      console.log(account);
+      const result = await allAccountsCollection.insertOne(account);
+      res.send(result);
+    });
     // read data for emergency service req slider
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
       res.send(result);
     });
+
+
     app.get("/cardAppliers", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
+      console.log('card apply',result)
     });
+
+
     app.get("/users", async (req, res) => {
       let query = {};
       const email = req.query.email;
@@ -148,7 +166,7 @@ async function run() {
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
     });
-    
+
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
       const email = req.params.email;
@@ -159,7 +177,7 @@ async function run() {
 
     //get all customer info
     app.get("/allCustomers", async (req, res) => {
-      const query = { role: 'customer' };
+      const query = { role: "customer" };
       const info = await usersCollection.find(query).toArray();
       res.send(info);
     });
