@@ -54,7 +54,7 @@ async function run() {
     const insuranceCollection = client
       .db("capital-trust-bank")
       .collection("insuranceApplicants");
-
+   
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -98,6 +98,11 @@ async function run() {
       res.send(result);
     });
     // read data for emergency service req slider
+    app.get("/bankAccounts", async (req, res) => {
+      const query = {};
+      const result = await allAccountsCollection.find(query).toArray();
+      res.send(result);
+    });
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
