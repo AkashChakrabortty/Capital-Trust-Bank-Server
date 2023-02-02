@@ -56,9 +56,9 @@ async function run() {
     const insuranceCollection = client
       .db("capital-trust-bank")
       .collection("insuranceApplicants");
-      const deviceInfoCollection = client
-        .db("capital-trust-bank")
-        .collection("deviceInfo");
+    const deviceInfoCollection = client
+      .db("capital-trust-bank")
+      .collection("deviceInfo");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -193,11 +193,19 @@ async function run() {
       const email = req.params.email;
       const ua = req.useragent;
       const deviceInfo = {
-        email : email,
+        email: email,
         browser: ua.browser,
-        os : ua.os
-      }
+        os: ua.os,
+      };
       const result = deviceInfoCollection.insertOne(deviceInfo);
+      res.send(result);
+    });
+
+    //get single customer device info
+    app.get("/getDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {email};
+      const result = await deviceInfoCollection.find(query).toArray();
       res.send(result);
     });
     //
