@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const useragent = require("express-useragent");
 require("dotenv").config();
 var jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -9,6 +10,7 @@ const port = process.env.PORT || 5000;
 //middleware
 app.use(cors());
 app.use(express.json());
+app.use(useragent.express());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.z9k78im.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -54,7 +56,10 @@ async function run() {
     const insuranceCollection = client
       .db("capital-trust-bank")
       .collection("insuranceApplicants");
-   
+    const deviceInfoCollection = client
+      .db("capital-trust-bank")
+      .collection("deviceInfo");
+
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -78,9 +83,7 @@ async function run() {
       res.send(result);
     });
 
-    
     /*Start Emon Backend Code  */
-
 
     /*Start Emon Backend Code  */
     //post applier info in database applierCollection
@@ -109,14 +112,12 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/cardAppliers", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
-      console.log('card apply',result)
+      console.log("card apply", result);
     });
-
 
     app.get("/users", async (req, res) => {
       let query = {};
@@ -171,6 +172,7 @@ async function run() {
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
     });
+    //--------Akash Back-End Start-------------//
 
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
@@ -186,7 +188,30 @@ async function run() {
       const info = await usersCollection.find(query).toArray();
       res.send(info);
     });
+    //store all customer device info
+    app.post("/storeDeviceInfo/:email", (req, res) => {
+      const email = req.params.email;
+      const ua = req.useragent;
+      const datetime = new Date();
+      const deviceInfo = {
+        email: email,
+        browser: ua.browser,
+        os: ua.os,
+        data: datetime.toISOString().slice(0, 10),
+      };
+      const result = deviceInfoCollection.insertOne(deviceInfo);
+      res.send(result);
+    });
 
+    //get single customer device info
+    app.get("/getDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+    //
+    //--------Akash Back-End End-------------//
     //--------------Insurance--------------
     app.get("/insuranceApplicants", async (req, res) => {
       const query = {};
