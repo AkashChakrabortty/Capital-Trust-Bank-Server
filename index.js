@@ -58,7 +58,7 @@ async function run() {
       };
       const result = await usersCollection.updateOne(query, updateDoc, option);
       const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
-        expiresIn: "7d",
+        expiresIn: "10d",
       });
       res.send({ result, Token: token });
     });
