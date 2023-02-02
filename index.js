@@ -192,10 +192,12 @@ async function run() {
     app.post("/storeDeviceInfo/:email", (req, res) => {
       const email = req.params.email;
       const ua = req.useragent;
+      const datetime = new Date();
       const deviceInfo = {
         email: email,
         browser: ua.browser,
         os: ua.os,
+        data: datetime.toISOString().slice(0, 10),
       };
       const result = deviceInfoCollection.insertOne(deviceInfo);
       res.send(result);
@@ -204,7 +206,7 @@ async function run() {
     //get single customer device info
     app.get("/getDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email};
+      const query = { email };
       const result = await deviceInfoCollection.find(query).toArray();
       res.send(result);
     });
