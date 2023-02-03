@@ -105,7 +105,7 @@ async function run() {
       const query = {};
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
-    });
+    });  
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
