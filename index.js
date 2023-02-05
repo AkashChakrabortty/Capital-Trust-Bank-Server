@@ -121,6 +121,7 @@ async function run() {
       .db("capital-trust-bank")
       .collection("deviceInfo");
 
+    // ------Start of Rakib Khan Backend -------
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -143,6 +144,18 @@ async function run() {
       const result = await teamsCollection.find(query).toArray();
       res.send(result);
     });
+ 
+    // get team member details
+    app.get('/team-details/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await teamsCollection.findOne(query);
+      res.send(result)
+    })
+
+    // ------Start of Rakib Khan Backend -------
+
+
 
     /*Start Emon Backend Code  */
 
