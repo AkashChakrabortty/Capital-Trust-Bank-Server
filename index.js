@@ -2,7 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const useragent = require("express-useragent");
 require("dotenv").config();
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const mg = require("nodemailer-mailgun-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -18,6 +20,57 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+function sendNewAccountEmail(account) {
+  const {
+    firstName,
+    lastName,
+    phone,
+    date,
+    monthlySalary,
+    initialDeposit,
+    email,
+    accountType,
+  } = account;
+  console.log(account);
+  // This is your API key that you retrieve from www.mailgun.com/cp (free up to 10K monthly emails)
+  const auth = {
+    auth: {
+      api_key: process.env.EMAIL_SEND_KEY,
+      domain: process.env.EMAIL_SEND_DOMAIN,
+    },
+  };
+
+  console.log(process.env.EMAIL_SEND_KEY, process.env.EMAIL_SEND_DOMAIN);
+
+  const transporter = nodemailer.createTransport(mg(auth));
+  transporter.sendMail(
+    {
+      from: "wdevc6@gmail.com", // verified sender email
+      to: email || "wdevc6@gmail.com", // recipient email
+      subject: "Your Bank Account Opening Form Submitted", // Subject line
+      text: `
+      <h3 style="">${firstName} ${" "} ${lastName} Your New Account Opening From Submit Confirm </h3>
+      <div>
+        <p>Account From submit on  ${date} </p>
+        <p>Your Phone Number  ${phone} </p>
+        <p>Your Account Type ${accountType} </p>
+        <p>Your Monthly Salary ${monthlySalary} </p>
+        <p>Your initial Deposit ${initialDeposit} </p>
+        <p>Your form has been submitted please wait for approval</p>
+      </div>
+      `, // plain text body
+      html: "<b>Hello world!</b>", // html body
+    },
+    function (error, info) {
+      if (error) {
+        console.log("Email send error", error);
+      } else {
+        console.log("Email sent: " + info);
+      }
+    }
+  );
+}
 
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -98,6 +151,8 @@ async function run() {
       const account = req.body;
       console.log(account);
       const result = await allAccountsCollection.insertOne(account);
+      // send email about open account from confirmation
+      sendNewAccountEmail(account);
       res.send(result);
     });
     // read data for emergency service req slider
@@ -105,7 +160,7 @@ async function run() {
       const query = {};
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
-    });  
+    });
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
