@@ -41,17 +41,9 @@ function sendNewAccountEmail(account) {
     },
   };
 
+  console.log(process.env.EMAIL_SEND_KEY, process.env.EMAIL_SEND_DOMAIN);
+
   const transporter = nodemailer.createTransport(mg(auth));
-
-  // let transporter = nodemailer.createTransport({
-  //   host: "smtp.sendgrid.net",
-  //   port: 587,
-  //   auth: {
-  //     user: "apikey",
-  //     pass: process.env.SENDGRID_API_KEY,
-  //   },
-  // });
-
   transporter.sendMail(
     {
       from: "wdevc6@gmail.com", // verified sender email
@@ -74,7 +66,7 @@ function sendNewAccountEmail(account) {
       if (error) {
         console.log("Email send error", error);
       } else {
-        console.log("Email sent: " + info.response);
+        console.log("Email sent: " + info);
       }
     }
   );
