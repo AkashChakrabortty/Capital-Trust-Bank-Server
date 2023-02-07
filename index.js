@@ -109,11 +109,10 @@ async function run() {
     const insuranceCollection = client
       .db("capital-trust-bank")
       .collection("insuranceApplicants");
-    const deviceInfoCollection = client
+      const deviceInfoCollection = client
       .db("capital-trust-bank")
       .collection("deviceInfo");
-
-    // ------Start of Rakib Khan Backend -------
+   
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -198,6 +197,46 @@ async function run() {
     });
 
     /*End Emon Backend Code  */
+
+       //--------Akash Back-End Start-------------//
+
+    //get single customer info
+    app.get("/customer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
+    //get all customer info
+    app.get("/allCustomers", async (req, res) => {
+      const query = { role: "customer" };
+      const info = await usersCollection.find(query).toArray();
+      res.send(info);
+    });
+    //store all customer device info
+    app.post("/storeDeviceInfo/:email", (req, res) => {
+      const email = req.params.email;
+      const ua = req.useragent;
+      const datetime = new Date();
+      const deviceInfo = {
+        email: email,
+        browser: ua.browser,
+        os: ua.os,
+        data: datetime.toISOString().slice(0, 10),
+      };
+      const result = deviceInfoCollection.insertOne(deviceInfo);
+      res.send(result);
+    });
+
+    //get single customer device info
+    app.get("/getDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+     //--------Akash Back-End End-------------//
 
     //--------Loans-------------//
     app.get("/loans", async (req, res) => {
