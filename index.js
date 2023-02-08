@@ -215,17 +215,34 @@ async function run() {
       res.send(info);
     });
     //store all customer device info
-    app.post("/storeDeviceInfo/:email", (req, res) => {
+    app.post("/storeDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
-      const ua = req.useragent;
-      const datetime = new Date();
-      const deviceInfo = {
-        email: email,
-        browser: ua.browser,
-        os: ua.os,
-        data: datetime.toISOString().slice(0, 10),
+      const query = {
+        email,
       };
-      const result = deviceInfoCollection.insertOne(deviceInfo);
+      const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+        .length;
+      if (numberOfDevice <= 2) {
+        const ua = req.useragent;
+        const datetime = new Date();
+        const deviceInfo = {
+          email: email,
+          browser: ua.browser,
+          os: ua.os,
+          date: datetime.toISOString().slice(0, 10),
+        };
+        const result = deviceInfoCollection.insertOne(deviceInfo);
+        res.send(result);
+      } else {
+        res.send(false);
+      }
+    });
+
+     //Delete single customer device info
+     app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.deleteOne(query);
       res.send(result);
     });
 
