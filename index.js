@@ -7,7 +7,11 @@ const nodemailer = require("nodemailer");
 const mg = require("nodemailer-mailgun-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
 const port = process.env.PORT || 5000;
+
+const socketServer = http.createServer(app);
 
 //middleware
 app.use(cors());
@@ -19,6 +23,14 @@ const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
+});
+
+//for cors policy
+const io = new Server(socketServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "DELETE", "PATCH"],
+  },
 });
 
 function sendNewAccountEmail(account) {
@@ -222,7 +234,7 @@ async function run() {
       };
       const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
         .length;
-      if (numberOfDevice <= 2) {
+      if (numberOfDevice <= 1) {
         const ua = req.useragent;
         const datetime = new Date();
         const deviceInfo = {
@@ -352,6 +364,24 @@ async function run() {
       const result = await deviceInfoCollection.find(query).toArray();
       res.send(result);
     });
+
+
+    //socket for chat
+    io.on("connection", (socket) => {
+      console.log("User connected");
+
+      socket.on("disconnect", () => {
+        console.log("User disconnected");
+      });
+
+      socket.on("send message", (data) => {
+        console.log(data)
+        if(data.sender !='admin@gmail.com'){
+          data.to = "admin@gmail.com";
+        }
+        io.emit('messageTransfer',data)
+      });
+    });
     //
     //--------Akash Back-End End-------------//
     //--------------Insurance--------------
@@ -376,6 +406,10 @@ app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
 
-app.listen(port, (req, res) => {
-  console.log(`Capital Trust Bank server is running on port ${port}`);
+// app.listen(port, (req, res) => {
+//   console.log(`Capital Trust Bank server is running on port ${port}`);
+// });
+
+socketServer.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
