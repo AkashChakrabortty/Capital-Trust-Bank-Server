@@ -212,7 +212,14 @@ async function run() {
         res.send(false);
       }
     });
-    
+
+     //Delete single customer device info
+     app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.deleteOne(query);
+      res.send(result);
+    });
 
     //get single customer device info
     app.get("/getDeviceInfo/:email", async (req, res) => {
