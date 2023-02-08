@@ -56,10 +56,13 @@ async function run() {
     const insuranceCollection = client
       .db("capital-trust-bank")
       .collection("insuranceApplicants");
-      const deviceInfoCollection = client
+    const deviceInfoCollection = client
       .db("capital-trust-bank")
       .collection("deviceInfo");
-   
+    const depositWithdrawCollection = client
+      .db("capital-trust-bank")
+      .collection("depositWithdraw");
+
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -83,9 +86,7 @@ async function run() {
       res.send(result);
     });
 
-    
     /*Start Emon Backend Code  */
-
 
     /*Start Emon Backend Code  */
     //post applier info in database applierCollection
@@ -114,14 +115,12 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/cardAppliers", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
-      console.log('card apply',result)
+      console.log("card apply", result);
     });
-
 
     app.get("/users", async (req, res) => {
       let query = {};
@@ -132,10 +131,16 @@ async function run() {
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
+    //get all card req
+    app.get("/cardReq", async (req, res) => {
+      const query = {};
+      const applicants = await applierCollection.find(query).toArray();
+      res.send(applicants);
+    });
 
     /*End Emon Backend Code  */
 
-       //--------Akash Back-End Start-------------//
+    //--------Akash Back-End Start-------------//
 
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
@@ -173,9 +178,9 @@ async function run() {
       const result = await deviceInfoCollection.find(query).toArray();
       res.send(result);
     });
-     //--------Akash Back-End End-------------//
+    //--------Akash Back-End End-------------//
 
-    //--------Loans-------------//
+    //------------Mouri----------------//
     app.get("/loans", async (req, res) => {
       const query = {};
       const cursor = loanServiceDataCollection.find(query);
@@ -197,12 +202,6 @@ async function run() {
       const service = await loanServiceDataCollection.findOne(query);
       res.send(service);
     });
-    //get all card req
-    app.get("/cardReq", async (req, res) => {
-      const query = {};
-      const applicants = await applierCollection.find(query).toArray();
-      res.send(applicants);
-    });
 
     app.get("/applicants", async (req, res) => {
       const query = {};
@@ -217,6 +216,49 @@ async function run() {
       res.send(result);
     });
 
+    //--------------Insurance--------------
+    app.get("/insuranceApplicants", async (req, res) => {
+      const query = {};
+      const applicants = await insuranceCollection.find(query).toArray();
+      res.send(applicants);
+    });
+
+    app.post("/insuranceApplicants", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await insuranceCollection.insertOne(applicant);
+      res.send(result);
+    });
+
+    //-------------Deposit& Withdraw----------------//
+    // app.get("/deposit", async (req, res) => {
+    //   const query = { type: "deposit" };
+    //   const applicants = await depositWithdrawCollection.find(query).toArray();
+    //   res.send(applicants);
+    // });
+
+    app.get("/depositWithdraw", async (req, res) => {
+      const query = {};
+      const applicant = await depositWithdrawCollection.find(query).toArray();
+      res.send(applicant);
+    });
+    app.get("/depositWithdraw/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await depositWithdrawCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/depositWithdraw", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await depositWithdrawCollection.insertOne(applicant);
+      res.send(result);
+    });
+
+    //------------------Mouri----------------------//
+    //-------------------End-------------------------//
+
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
       const email = req.params.email;
@@ -230,20 +272,6 @@ async function run() {
       const query = { role: "customer" };
       const info = await usersCollection.find(query).toArray();
       res.send(info);
-    });
-
-    //--------------Insurance--------------
-    app.get("/insuranceApplicants", async (req, res) => {
-      const query = {};
-      const applicants = await insuranceCollection.find(query).toArray();
-      res.send(applicants);
-    });
-
-    app.post("/insuranceApplicants", async (req, res) => {
-      const applicant = req.body;
-      console.log(applicant);
-      const result = await insuranceCollection.insertOne(applicant);
-      res.send(result);
     });
   } finally {
   }
