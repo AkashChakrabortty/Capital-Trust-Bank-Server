@@ -371,7 +371,9 @@ async function run() {
      //get single chat info
      app.get("/getChatInfo/:email", async (req, res) => {
       const email = req.params.email;
-      const result = await chatInfoCollection.find( { $or: [ { senderEmail: email }, {  receiverEmail: email  } ] } ).toArray();
+      const arrayEmail = email.split(" ");
+     
+      const result = await chatInfoCollection.find( { $or: [ { senderEmail: arrayEmail[0] , receiverEmail: arrayEmail[1]}, { senderEmail: arrayEmail[1] , receiverEmail: arrayEmail[0]  } ] } ).toArray();
       res.send(result);
     });
 
