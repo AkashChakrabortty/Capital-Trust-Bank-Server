@@ -367,6 +367,13 @@ async function run() {
       const result = await deviceInfoCollection.find(query).toArray();
       res.send(result);
     });
+     
+     //get single chat info
+     app.get("/getChatInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await chatInfoCollection.find( { $or: [ { senderEmail: email }, {  receiverEmail: email  } ] } ).toArray();
+      res.send(result);
+    });
 
      //get admin info
      app.get("/getAdminInfo/", async (req, res) => {
