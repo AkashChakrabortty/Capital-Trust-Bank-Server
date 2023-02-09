@@ -124,6 +124,9 @@ async function run() {
       const deviceInfoCollection = client
       .db("capital-trust-bank")
       .collection("deviceInfo");
+      const chatInfoCollection = client
+      .db("capital-trust-bank")
+      .collection("chatInfo");
    
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -372,6 +375,13 @@ async function run() {
       res.send(result);
     });
 
+     //get customers chat info
+     app.get("/getAllCustomersChat/", async (req, res) => {
+      const query = { receiverEmail : 'admin@gmail.com' };
+      const result = await chatInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
     //socket for chat
     io.on("connection", (socket) => {
       console.log("User connected");
@@ -380,11 +390,16 @@ async function run() {
         console.log("User disconnected");
       });
 
-      socket.on("send message", (data) => {
+      socket.on("send message", async(data) => {
         console.log(data)
-        if(data.sender !='admin@gmail.com'){
-          data.to = "admin@gmail.com";
+        if(data.senderEmail !='admin@gmail.com'){
+          const receiverInfo = await usersCollection.findOne({email:'admin@gmail.com'});
+          data.receiverEmail = "admin@gmail.com";
+          data.receiverImg = receiverInfo.image;
+          data.receiverName = receiverInfo.name;
         }
+        //store chat into the database
+        const storeChatInfo = chatInfoCollection.insertOne(data);
         io.emit('messageTransfer',data)
       });
     });
