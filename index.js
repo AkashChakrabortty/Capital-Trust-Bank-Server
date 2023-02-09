@@ -365,6 +365,12 @@ async function run() {
       res.send(result);
     });
 
+     //get admin info
+     app.get("/getAdminInfo/", async (req, res) => {
+      const query = { email : 'admin@gmail.com' };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
 
     //socket for chat
     io.on("connection", (socket) => {
