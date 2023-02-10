@@ -96,6 +96,9 @@ async function run() {
     const allAccountsCollection = client
       .db("capital-trust-bank")
       .collection("bankAccounts");
+    const donateCollection = client
+      .db("capital-trust-bank")
+      .collection("donate");
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
@@ -154,6 +157,12 @@ async function run() {
     /*Start Emon Backend Code  */
 
     /*Start Emon Backend Code  */
+    app.post("/donate", async (req, res) => {
+      const donate = req.body;
+      console.log(donate);
+      const result = await donateCollection.insertOne(donate);
+      res.send(result);
+    });
     //post applier info in database applierCollection
     // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
