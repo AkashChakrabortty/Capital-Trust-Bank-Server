@@ -2,10 +2,16 @@ const express = require("express");
 const cors = require("cors");
 const useragent = require("express-useragent");
 require("dotenv").config();
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const mg = require("nodemailer-mailgun-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
 const port = process.env.PORT || 5000;
+
+const socketServer = http.createServer(app);
 
 //middleware
 app.use(cors());
@@ -18,6 +24,65 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+//for cors policy
+const io = new Server(socketServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "DELETE", "PATCH"],
+  },
+});
+
+function sendNewAccountEmail(account) {
+  const {
+    firstName,
+    lastName,
+    phone,
+    date,
+    monthlySalary,
+    initialDeposit,
+    email,
+    accountType,
+  } = account;
+  console.log(account);
+  // This is your API key that you retrieve from www.mailgun.com/cp (free up to 10K monthly emails)
+  const auth = {
+    auth: {
+      api_key: process.env.EMAIL_SEND_KEY,
+      domain: process.env.EMAIL_SEND_DOMAIN,
+    },
+  };
+
+  console.log(process.env.EMAIL_SEND_KEY, process.env.EMAIL_SEND_DOMAIN);
+
+  const transporter = nodemailer.createTransport(mg(auth));
+  transporter.sendMail(
+    {
+      from: "wdevc6@gmail.com", // verified sender email
+      to: email || "wdevc6@gmail.com", // recipient email
+      subject: "Your Bank Account Opening Form Submitted", // Subject line
+      text: `
+      <h3 style="">${firstName} ${" "} ${lastName} Your New Account Opening From Submit Confirm </h3>
+      <div>
+        <p>Account From submit on  ${date} </p>
+        <p>Your Phone Number  ${phone} </p>
+        <p>Your Account Type ${accountType} </p>
+        <p>Your Monthly Salary ${monthlySalary} </p>
+        <p>Your initial Deposit ${initialDeposit} </p>
+        <p>Your form has been submitted please wait for approval</p>
+      </div>
+      `, // plain text body
+      html: "<b>Hello world!</b>", // html body
+    },
+    function (error, info) {
+      if (error) {
+        console.log("Email send error", error);
+      } else {
+        console.log("Email sent: " + info);
+      }
+    }
+  );
+}
 
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -59,6 +124,9 @@ async function run() {
     const deviceInfoCollection = client
       .db("capital-trust-bank")
       .collection("deviceInfo");
+    const chatInfoCollection = client
+      .db("capital-trust-bank")
+      .collection("chatInfo");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
@@ -86,6 +154,16 @@ async function run() {
       res.send(result);
     });
 
+    // get team member details
+    app.get("/team-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await teamsCollection.findOne(query);
+      res.send(result);
+    });
+
+    // ------Start of Rakib Khan Backend -------
+
     /*Start Emon Backend Code  */
 
     /*Start Emon Backend Code  */
@@ -101,6 +179,8 @@ async function run() {
       const account = req.body;
       console.log(account);
       const result = await allAccountsCollection.insertOne(account);
+      // send email about open account from confirmation
+      sendNewAccountEmail(account);
       res.send(result);
     });
     // read data for emergency service req slider
@@ -140,51 +220,107 @@ async function run() {
 
     /*End Emon Backend Code  */
 
-    //--------Akash Back-End Start-------------//
+    // //--------Akash Back-End Start-------------//
 
-    //get single customer info
-    app.get("/customer/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const info = await usersCollection.findOne(query);
-      res.send(info);
-    });
+    // //get single customer info
+    // app.get("/customer/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email: email };
+    //   const info = await usersCollection.findOne(query);
+    //   res.send(info);
+    // });
 
-    //get all customer info
-    app.get("/allCustomers", async (req, res) => {
-      const query = { role: "customer" };
-      const info = await usersCollection.find(query).toArray();
-      res.send(info);
-    });
-    //store all customer device info
-    app.post("/storeDeviceInfo/:email", (req, res) => {
-      const email = req.params.email;
-      const ua = req.useragent;
-      const datetime = new Date();
-      const deviceInfo = {
-        email: email,
-        browser: ua.browser,
-        os: ua.os,
-        data: datetime.toISOString().slice(0, 10),
-      };
-      const result = deviceInfoCollection.insertOne(deviceInfo);
-      res.send(result);
-    });
+    // //get all customer info
+    // app.get("/allCustomers", async (req, res) => {
+    //   const query = { role: "customer" };
+    //   const info = await usersCollection.find(query).toArray();
+    //   res.send(info);
+    // });
+    // //store all customer device info
+    // app.post("/storeDeviceInfo/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = {
+    //     email,
+    //   };
+    //   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+    //     .length;
+    //   if (numberOfDevice <= 1) {
+    //     const ua = req.useragent;
+    //     const datetime = new Date();
+    //     const deviceInfo = {
+    //       email: email,
+    //       browser: ua.browser,
+    //       os: ua.os,
+    //       date: datetime.toISOString().slice(0, 10),
+    //     };
+    //     const result = deviceInfoCollection.insertOne(deviceInfo);
+    //     res.send(result);
+    //   } else {
+    //     res.send(false);
+    //   }
+    // });
 
-    //get single customer device info
-    app.get("/getDeviceInfo/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const result = await deviceInfoCollection.find(query).toArray();
-      res.send(result);
-    });
-    //--------Akash Back-End End-------------//
+    // //Delete single customer device info
+    // app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email };
+    //   const result = await deviceInfoCollection.deleteOne(query);
+    //   res.send(result);
+    // });
+
+    // //get single customer device info
+    // app.get("/getDeviceInfo/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email };
+    //   const result = await deviceInfoCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // //--------Akash Back-End End-------------//
 
     //------------Mouri----------------//
+
+    //-------------Deposit& Withdraw----------------//
+    // app.get("/deposit", async (req, res) => {
+    //   const query = { type: "deposit" };
+    //   const applicants = await depositWithdrawCollection.find(query).toArray();
+    //   res.send(applicants);
+    // });
+
+    app.get("/depositWithdraw", async (req, res) => {
+      const query = {};
+      const applicant = await depositWithdrawCollection.find(query).toArray();
+      res.send(applicant);
+    });
+    app.get("/depositWithdraw/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await depositWithdrawCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/depositWithdraw", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await depositWithdrawCollection.insertOne(applicant);
+      res.send(result);
+    });
     app.get("/loans", async (req, res) => {
       const query = {};
       const cursor = loanServiceDataCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+    //--------------Insurance--------------
+    app.get("/insuranceApplicants", async (req, res) => {
+      const query = {};
+      const applicants = await insuranceCollection.find(query).toArray();
+      res.send(applicants);
+    });
+
+    app.post("/insuranceApplicants", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await insuranceCollection.insertOne(applicant);
       res.send(result);
     });
 
@@ -216,48 +352,10 @@ async function run() {
       res.send(result);
     });
 
-    //--------------Insurance--------------
-    app.get("/insuranceApplicants", async (req, res) => {
-      const query = {};
-      const applicants = await insuranceCollection.find(query).toArray();
-      res.send(applicants);
-    });
+    //--------------Mouri-------------------//
+    //------------------End------------------//
 
-    app.post("/insuranceApplicants", async (req, res) => {
-      const applicant = req.body;
-      console.log(applicant);
-      const result = await insuranceCollection.insertOne(applicant);
-      res.send(result);
-    });
-
-    //-------------Deposit& Withdraw----------------//
-    // app.get("/deposit", async (req, res) => {
-    //   const query = { type: "deposit" };
-    //   const applicants = await depositWithdrawCollection.find(query).toArray();
-    //   res.send(applicants);
-    // });
-
-    app.get("/depositWithdraw", async (req, res) => {
-      const query = {};
-      const applicant = await depositWithdrawCollection.find(query).toArray();
-      res.send(applicant);
-    });
-    app.get("/depositWithdraw/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const result = await depositWithdrawCollection.find(query).toArray();
-      res.send(result);
-    });
-
-    app.post("/depositWithdraw", async (req, res) => {
-      const applicant = req.body;
-      console.log(applicant);
-      const result = await depositWithdrawCollection.insertOne(applicant);
-      res.send(result);
-    });
-
-    //------------------Mouri----------------------//
-    //-------------------End-------------------------//
+    //--------Akash Back-End Start-------------//
 
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
@@ -273,6 +371,102 @@ async function run() {
       const info = await usersCollection.find(query).toArray();
       res.send(info);
     });
+
+    //store all customer device info
+    app.post("/storeDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {
+        email,
+      };
+      const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+        .length;
+      if (numberOfDevice <= 2) {
+        const ua = req.useragent;
+        const datetime = new Date();
+        const deviceInfo = {
+          email: email,
+          browser: ua.browser,
+          os: ua.os,
+          date: datetime.toISOString().slice(0, 10),
+        };
+        const result = deviceInfoCollection.insertOne(deviceInfo);
+        res.send(result);
+      } else {
+        res.send(false);
+      }
+    });
+
+    //Delete single customer device info
+    app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //get single customer device info
+    app.get("/getDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get single chat info
+    app.get("/getChatInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const arrayEmail = email.split(" ");
+
+      const result = await chatInfoCollection
+        .find({
+          $or: [
+            { senderEmail: arrayEmail[0], receiverEmail: arrayEmail[1] },
+            { senderEmail: arrayEmail[1], receiverEmail: arrayEmail[0] },
+          ],
+        })
+        .toArray();
+      res.send(result);
+    });
+
+    //get admin info
+    app.get("/getAdminInfo", async (req, res) => {
+      const query = { email: "admin@gmail.com" };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    //get customers chat info
+    app.get("/getAllCustomersChat", async (req, res) => {
+      const query = { receiverEmail: "admin@gmail.com" };
+      const result = await chatInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //socket for chat
+    io.on("connection", (socket) => {
+      console.log("User connected");
+
+      socket.on("disconnect", () => {
+        console.log("User disconnected");
+      });
+
+      socket.on("send message", async (data) => {
+        console.log(data);
+        if (data.senderEmail != "admin@gmail.com") {
+          const receiverInfo = await usersCollection.findOne({
+            email: "admin@gmail.com",
+          });
+          data.receiverEmail = "admin@gmail.com";
+          data.receiverImg = receiverInfo.image;
+          data.receiverName = receiverInfo.name;
+        }
+        //store chat into the database
+        const storeChatInfo = chatInfoCollection.insertOne(data);
+        io.emit("messageTransfer", data);
+      });
+    });
+    //
+    //--------Akash Back-End End-------------//
   } finally {
   }
 }
@@ -282,6 +476,10 @@ app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
 
-app.listen(port, (req, res) => {
-  console.log(`Capital Trust Bank server is running on port ${port}`);
+// app.listen(port, (req, res) => {
+//   console.log(`Capital Trust Bank server is running on port ${port}`);
+// });
+
+socketServer.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
