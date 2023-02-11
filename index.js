@@ -1,4 +1,5 @@
 const express = require("express");
+const SSLCommerzPayment = require("sslcommerz-lts");
 const cors = require("cors");
 const useragent = require("express-useragent");
 require("dotenv").config();
@@ -24,6 +25,11 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// SSL CCOMMERZ CODE
+const store_id = process.env.STORE_ID;
+const store_passwd = process.env.STORE_PASSWORD;
+const is_live = false; //true for live, false for sandbox
 
 //for cors policy
 const io = new Server(socketServer, {
@@ -173,8 +179,55 @@ async function run() {
     app.post("/donate", async (req, res) => {
       const donate = req.body;
       console.log(donate);
-      const result = await donateCollection.insertOne(donate);
-      res.send(result);
+      // const result = await donateCollection.insertOne(donate);
+      // res.send(result);
+
+      const data = {
+        total_amount: donate.amount,
+        currency: "BDT",
+        tran_id: new ObjectId().toString().substring(0, 8), // use unique tran_id for each api call
+        success_url: "http://localhost:3030/success",
+        fail_url: "http://localhost:3030/fail",
+        cancel_url: "http://localhost:3030/cancel",
+        ipn_url: "http://localhost:3030/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: "Electronic",
+        product_profile: "general",
+        cus_name: donate.donarName,
+        cus_email: donate.donarEmail,
+        cus_add1: "Dhaka",
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: "01711111111",
+        cus_fax: "01711111111",
+        ship_name: "Customer Name",
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+      console.log(data);
+
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+
+      sslcz.init(data).then((apiResponse) => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+        console.log(apiResponse);
+
+        try {
+          const result = donateCollection.insertOne(donate);
+          res.send({ url: GatewayPageURL });
+        } catch (e) {
+          print(e);
+        }
+      });
     });
     //post applier info in database applierCollection
     // applier for credit card
@@ -226,8 +279,6 @@ async function run() {
     });
 
     /*========End Emon Backend Code ============= */
-
-
 
     //------------Mouri----------------//
 
@@ -435,78 +486,59 @@ socketServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
+// //--------Akash Back-End Start-------------//
 
+// //get single customer info
+// app.get("/customer/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = { email: email };
+//   const info = await usersCollection.findOne(query);
+//   res.send(info);
+// });
 
+// //get all customer info
+// app.get("/allCustomers", async (req, res) => {
+//   const query = { role: "customer" };
+//   const info = await usersCollection.find(query).toArray();
+//   res.send(info);
+// });
+// //store all customer device info
+// app.post("/storeDeviceInfo/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = {
+//     email,
+//   };
+//   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+//     .length;
+//   if (numberOfDevice <= 1) {
+//     const ua = req.useragent;
+//     const datetime = new Date();
+//     const deviceInfo = {
+//       email: email,
+//       browser: ua.browser,
+//       os: ua.os,
+//       date: datetime.toISOString().slice(0, 10),
+//     };
+//     const result = deviceInfoCollection.insertOne(deviceInfo);
+//     res.send(result);
+//   } else {
+//     res.send(false);
+//   }
+// });
 
+// //Delete single customer device info
+// app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = { email };
+//   const result = await deviceInfoCollection.deleteOne(query);
+//   res.send(result);
+// });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // //--------Akash Back-End Start-------------//
-
-    // //get single customer info
-    // app.get("/customer/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email: email };
-    //   const info = await usersCollection.findOne(query);
-    //   res.send(info);
-    // });
-
-    // //get all customer info
-    // app.get("/allCustomers", async (req, res) => {
-    //   const query = { role: "customer" };
-    //   const info = await usersCollection.find(query).toArray();
-    //   res.send(info);
-    // });
-    // //store all customer device info
-    // app.post("/storeDeviceInfo/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = {
-    //     email,
-    //   };
-    //   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
-    //     .length;
-    //   if (numberOfDevice <= 1) {
-    //     const ua = req.useragent;
-    //     const datetime = new Date();
-    //     const deviceInfo = {
-    //       email: email,
-    //       browser: ua.browser,
-    //       os: ua.os,
-    //       date: datetime.toISOString().slice(0, 10),
-    //     };
-    //     const result = deviceInfoCollection.insertOne(deviceInfo);
-    //     res.send(result);
-    //   } else {
-    //     res.send(false);
-    //   }
-    // });
-
-    // //Delete single customer device info
-    // app.delete("/deleteDeviceInfo/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email };
-    //   const result = await deviceInfoCollection.deleteOne(query);
-    //   res.send(result);
-    // });
-
-    // //get single customer device info
-    // app.get("/getDeviceInfo/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email };
-    //   const result = await deviceInfoCollection.find(query).toArray();
-    //   res.send(result);
-    // });
-    // //--------Akash Back-End End-------------//
+// //get single customer device info
+// app.get("/getDeviceInfo/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = { email };
+//   const result = await deviceInfoCollection.find(query).toArray();
+//   res.send(result);
+// });
+// //--------Akash Back-End End-------------//
