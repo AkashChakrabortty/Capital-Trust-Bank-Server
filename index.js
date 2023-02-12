@@ -189,6 +189,12 @@ async function run() {
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
+    app.get("/bankAccounts/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await allAccountsCollection.find(query).toArray();
+      res.send(result);
+    });
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
@@ -294,7 +300,10 @@ async function run() {
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await depositWithdrawCollection.find(query).toArray();
+      const result = await await depositWithdrawCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
     });
 
