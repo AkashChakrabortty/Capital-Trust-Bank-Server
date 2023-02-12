@@ -179,17 +179,21 @@ async function run() {
     app.post("/donate", async (req, res) => {
       const donate = req.body;
       console.log(donate);
+      const { donarName, donarEmail, amount } = donate;
+      if (!donarName || !donarEmail || !amount) {
+        return res.send({ error: "Please provide all the information" });
+      }
       // const result = await donateCollection.insertOne(donate);
       // res.send(result);
-
+      const transactionId = new ObjectId().toString().substring(0, 6);
       const data = {
         total_amount: donate.amount,
-        currency: "BDT",
-        tran_id: new ObjectId().toString().substring(0, 8), // use unique tran_id for each api call
-        success_url: "http://localhost:3030/success",
-        fail_url: "http://localhost:3030/fail",
-        cancel_url: "http://localhost:3030/cancel",
-        ipn_url: "http://localhost:3030/ipn",
+        currency: donate.currency,
+        tran_id: transactionId, // use unique tran_id for each api call
+        success_url: `${process.env.SERVER_URL}/donate/success?transactionId=${transactionId}`,
+        fail_url: `http://localhost:5000/donate/fail?transactionId=${transactionId}`,
+        cancel_url: "http://localhost:5000/donate/cancel",
+        ipn_url: "http://localhost:5000/donate/ipn",
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: "Electronic",
@@ -202,7 +206,7 @@ async function run() {
         cus_state: "Dhaka",
         cus_postcode: "1000",
         cus_country: "Bangladesh",
-        cus_phone: "01711111111",
+        cus_phone: donate.donarPhnNumber,
         cus_fax: "01711111111",
         ship_name: "Customer Name",
         ship_add1: "Dhaka",
@@ -212,23 +216,66 @@ async function run() {
         ship_postcode: 1000,
         ship_country: "Bangladesh",
       };
-      console.log(data);
 
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
 
       sslcz.init(data).then((apiResponse) => {
         // Redirect the user to payment gateway
         let GatewayPageURL = apiResponse.GatewayPageURL;
-        console.log(apiResponse);
 
-        try {
-          const result = donateCollection.insertOne(donate);
-          res.send({ url: GatewayPageURL });
-        } catch (e) {
-          print(e);
-        }
+        donateCollection.insertOne({
+          ...donate,
+          transactionId,
+          paid: false,
+        });
+        res.send({ url: GatewayPageURL });
+        // try {
+        //   const result = donateCollection.insertOne(donate);
+        //   res.send({ url: GatewayPageURL });
+        // } catch (e) {
+        //   print(e);
+        // }
       });
     });
+
+    app.post("/donate/success", async (req, res) => {
+      const { transactionId } = req.query;
+
+      // if (transactionId) {
+      //   return res.redirect("http://localhost:3000/donate/fail");
+      // }
+
+      console.log("success", transactionId);
+      const result = await donateCollection.updateOne(
+        { transactionId },
+        { $set: { paid: true, paidAt: new Date() } }
+      );
+
+      if (result.modifiedCount > 0) {
+        res.redirect(
+          `${process.env.CLIENT_URL}/donate/success?transactionId=${transactionId}`
+        );
+      }
+    });
+
+    app.post("/donate/fail", async (req, res) => {
+      const { transactionId } = req.query;
+      if (transactionId) {
+        return res.redirect("http://localhost:3000/donate/fail");
+      }
+      const result = await donateCollection.deleteOne({ transactionId });
+      if (result.deletedCount) {
+        res.redirect("http://localhost:3000/donate/fail");
+      }
+    });
+
+    app.get("/donate/by-transaction-id/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await donateCollection.findOne({ transactionId: id });
+      console.log(id, result);
+      res.send(result);
+    });
+
     //post applier info in database applierCollection
     // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
