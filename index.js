@@ -127,6 +127,9 @@ async function run() {
     const deviceInfoCollection = client
       .db("capital-trust-bank")
       .collection("deviceInfo");
+    const chatInfoCollection = client
+      .db("capital-trust-bank")
+      .collection("chatInfo");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
@@ -153,22 +156,20 @@ async function run() {
       const result = await teamsCollection.find(query).toArray();
       res.send(result);
     });
- 
+
     // get team member details
-    app.get('/team-details/:id', async (req, res) => {
+    app.get("/team-details/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await teamsCollection.findOne(query);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // ------Start of Rakib Khan Backend -------
 
-
-
     /*Start Emon Backend Code  */
 
-    /*Start Emon Backend Code  */
+    /*==============Start Emon Backend Code  ============*/
     app.post("/donate", async (req, res) => {
       const donate = req.body;
       console.log(donate);
@@ -185,10 +186,14 @@ async function run() {
     });
     app.post("/bankAccounts", async (req, res) => {
       const account = req.body;
-      console.log(account);
-      const result = await allAccountsCollection.insertOne(account);
+      const accountId = new ObjectId().toString().substring(0, 16);
+      console.log(account, accountId);
+      const result = await allAccountsCollection.insertOne({
+        ...account,
+        accountId,
+      });
       // send email about open account from confirmation
-      sendNewAccountEmail(account);
+      // sendNewAccountEmail(account);
       res.send(result);
     });
     // read data for emergency service req slider
@@ -219,78 +224,55 @@ async function run() {
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
-    //get all card req
-    app.get("/cardReq", async (req, res) => {
-      const query = {};
-      const applicants = await applierCollection.find(query).toArray();
-      res.send(applicants);
-    });
 
     /*========End Emon Backend Code ============= */
 
-    //--------Akash Back-End Start-------------//
 
-    //get single customer info
-    app.get("/customer/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const info = await usersCollection.findOne(query);
-      res.send(info);
-    });
-
-    //get all customer info
-    app.get("/allCustomers", async (req, res) => {
-      const query = { role: "customer" };
-      const info = await usersCollection.find(query).toArray();
-      res.send(info);
-    });
-    
-     //store all customer device info
-     app.post("/storeDeviceInfo/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = {
-        email,
-      };
-      const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
-        .length;
-      if (numberOfDevice <= 2) {
-        const ua = req.useragent;
-        const datetime = new Date();
-        const deviceInfo = {
-          email: email,
-          browser: ua.browser,
-          os: ua.os,
-          date: datetime.toISOString().slice(0, 10),
-        };
-        const result = deviceInfoCollection.insertOne(deviceInfo);
-        res.send(result);
-      } else {
-        res.send(false);
-      }
-    });
-
-     //Delete single customer device info
-     app.delete("/deleteDeviceInfo/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const result = await deviceInfoCollection.deleteOne(query);
-      res.send(result);
-    });
-
-    //get single customer device info
-    app.get("/getDeviceInfo/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const result = await deviceInfoCollection.find(query).toArray();
-      res.send(result);
-    });
-    //--------Akash Back-End End-------------//
 
     //------------Mouri----------------//
+
+    //-------------Deposit& Withdraw----------------//
+    // app.get("/deposit", async (req, res) => {
+    //   const query = { type: "deposit" };
+    //   const applicants = await depositWithdrawCollection.find(query).toArray();
+    //   res.send(applicants);
+    // });
+
+    app.get("/depositWithdraw", async (req, res) => {
+      const query = {};
+      const applicant = await depositWithdrawCollection.find(query).toArray();
+      res.send(applicant);
+    });
+    app.get("/depositWithdraw/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await depositWithdrawCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/depositWithdraw", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await depositWithdrawCollection.insertOne(applicant);
+      res.send(result);
+    });
     app.get("/loans", async (req, res) => {
       const query = {};
       const cursor = loanServiceDataCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+    //--------------Insurance--------------
+    app.get("/insuranceApplicants", async (req, res) => {
+      const query = {};
+      const applicants = await insuranceCollection.find(query).toArray();
+      res.send(applicants);
+    });
+
+    app.post("/insuranceApplicants", async (req, res) => {
+      const applicant = req.body;
+      console.log(applicant);
+      const result = await insuranceCollection.insertOne(applicant);
       res.send(result);
     });
 
@@ -321,50 +303,11 @@ async function run() {
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
     });
+
+    //--------------Mouri-------------------//
+    //------------------End------------------//
+
     //--------Akash Back-End Start-------------//
-
-    //--------------Insurance--------------
-    app.get("/insuranceApplicants", async (req, res) => {
-      const query = {};
-      const applicants = await insuranceCollection.find(query).toArray();
-      res.send(applicants);
-    });
-
-    app.post("/insuranceApplicants", async (req, res) => {
-      const applicant = req.body;
-      console.log(applicant);
-      const result = await insuranceCollection.insertOne(applicant);
-      res.send(result);
-    });
-
-    //-------------Deposit& Withdraw----------------//
-    // app.get("/deposit", async (req, res) => {
-    //   const query = { type: "deposit" };
-    //   const applicants = await depositWithdrawCollection.find(query).toArray();
-    //   res.send(applicants);
-    // });
-
-    app.get("/depositWithdraw", async (req, res) => {
-      const query = {};
-      const applicant = await depositWithdrawCollection.find(query).toArray();
-      res.send(applicant);
-    });
-    app.get("/depositWithdraw/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const result = await depositWithdrawCollection.find(query).toArray();
-      res.send(result);
-    });
-
-    app.post("/depositWithdraw", async (req, res) => {
-      const applicant = req.body;
-      console.log(applicant);
-      const result = await depositWithdrawCollection.insertOne(applicant);
-      res.send(result);
-    });
-
-    //------------------Mouri----------------------//
-    //-------------------End-------------------------//
 
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
@@ -380,6 +323,109 @@ async function run() {
       const info = await usersCollection.find(query).toArray();
       res.send(info);
     });
+
+    //store all customer device info
+    app.post("/storeDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {
+        email,
+      };
+      const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+        .length;
+      if (numberOfDevice <= 2) {
+        const ua = req.useragent;
+        const datetime = new Date();
+        const deviceInfo = {
+          email: email,
+          browser: ua.browser,
+          os: ua.os,
+          date: datetime.toISOString().slice(0, 10),
+        };
+        const result = deviceInfoCollection.insertOne(deviceInfo);
+        res.send(result);
+      } else {
+        res.send(false);
+      }
+    });
+
+    //Delete single customer device info
+    app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //get single customer device info
+    app.get("/getDeviceInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get single chat info
+    app.get("/getChatInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const arrayEmail = email.split(" ");
+
+      const result = await chatInfoCollection
+        .find({
+          $or: [
+            { senderEmail: arrayEmail[0], receiverEmail: arrayEmail[1] },
+            { senderEmail: arrayEmail[1], receiverEmail: arrayEmail[0] },
+          ],
+        })
+        .toArray();
+      res.send(result);
+    });
+
+    //get admin info
+    app.get("/getAdminInfo", async (req, res) => {
+      const query = { email: "admin@gmail.com" };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    //get customers chat info
+    app.get("/getAllCustomersChat", async (req, res) => {
+      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let emailMap = {};
+      allChatInfo = allChatInfo.filter(obj => {
+        if (!emailMap[obj.senderEmail]) {
+          emailMap[obj.senderEmail] = true;
+          return true;
+        }
+        return false;
+      });
+      res.send(allChatInfo);
+    });
+
+    //socket for chat
+    io.on("connection", (socket) => {
+      console.log("User connected");
+
+      socket.on("disconnect", () => {
+        console.log("User disconnected");
+      });
+
+      socket.on("send message", async (data) => {
+        console.log(data);
+        if (data.senderEmail != "admin@gmail.com") {
+          const receiverInfo = await usersCollection.findOne({
+            email: "admin@gmail.com",
+          });
+          data.receiverEmail = "admin@gmail.com";
+          data.receiverImg = receiverInfo.image;
+          data.receiverName = receiverInfo.name;
+        }
+        //store chat into the database
+        const storeChatInfo = chatInfoCollection.insertOne(data);
+        io.emit("messageTransfer", data);
+      });
+    });
+    //
+    //--------Akash Back-End End-------------//
   } finally {
   }
 }
@@ -388,7 +434,6 @@ run().catch((error) => console.log(error));
 app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
-
 // app.listen(port, (req, res) => {
 //   console.log(`Capital Trust Bank server is running on port ${port}`);
 // });
@@ -396,3 +441,79 @@ app.get("/", (req, res) => {
 socketServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // //--------Akash Back-End Start-------------//
+
+    // //get single customer info
+    // app.get("/customer/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email: email };
+    //   const info = await usersCollection.findOne(query);
+    //   res.send(info);
+    // });
+
+    // //get all customer info
+    // app.get("/allCustomers", async (req, res) => {
+    //   const query = { role: "customer" };
+    //   const info = await usersCollection.find(query).toArray();
+    //   res.send(info);
+    // });
+    // //store all customer device info
+    // app.post("/storeDeviceInfo/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = {
+    //     email,
+    //   };
+    //   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+    //     .length;
+    //   if (numberOfDevice <= 1) {
+    //     const ua = req.useragent;
+    //     const datetime = new Date();
+    //     const deviceInfo = {
+    //       email: email,
+    //       browser: ua.browser,
+    //       os: ua.os,
+    //       date: datetime.toISOString().slice(0, 10),
+    //     };
+    //     const result = deviceInfoCollection.insertOne(deviceInfo);
+    //     res.send(result);
+    //   } else {
+    //     res.send(false);
+    //   }
+    // });
+
+    // //Delete single customer device info
+    // app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email };
+    //   const result = await deviceInfoCollection.deleteOne(query);
+    //   res.send(result);
+    // });
+
+    // //get single customer device info
+    // app.get("/getDeviceInfo/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email };
+    //   const result = await deviceInfoCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // //--------Akash Back-End End-------------//
