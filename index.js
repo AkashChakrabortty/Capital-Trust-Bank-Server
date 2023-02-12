@@ -130,6 +130,9 @@ async function run() {
     const chatInfoCollection = client
       .db("capital-trust-bank")
       .collection("chatInfo");
+      const exchangeCollection = client
+      .db("capital-trust-bank")
+      .collection("exchangeCollection");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
@@ -322,6 +325,13 @@ async function run() {
       const query = { role: "customer" };
       const info = await usersCollection.find(query).toArray();
       res.send(info);
+    });
+    
+     //store customers exchange info
+     app.post("/storeExchangeInfo", async (req, res) => {
+      const info = req.body;
+      const result = await exchangeCollection.insertOne(info);
+      res.send(result);
     });
 
     //store all customer device info
