@@ -226,7 +226,7 @@ async function run() {
         donateCollection.insertOne({
           ...donate,
           transactionId,
-          paid: false,
+          paid: "false",
         });
         res.send({ url: GatewayPageURL });
         // try {
@@ -237,7 +237,7 @@ async function run() {
         // }
       });
     });
-
+    //  donate success post method
     app.post("/donate/success", async (req, res) => {
       const { transactionId } = req.query;
 
@@ -245,10 +245,9 @@ async function run() {
       //   return res.redirect("http://localhost:3000/donate/fail");
       // }
 
-      console.log("success", transactionId);
       const result = await donateCollection.updateOne(
         { transactionId },
-        { $set: { paid: true, paidAt: new Date() } }
+        { $set: { paid: "true", paidAt: new Date() } }
       );
 
       if (result.modifiedCount > 0) {
@@ -257,7 +256,7 @@ async function run() {
         );
       }
     });
-
+    //  donate fail post method
     app.post("/donate/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
@@ -268,11 +267,18 @@ async function run() {
         res.redirect("http://localhost:3000/donate/fail");
       }
     });
-
+    // show api when users success his donate
     app.get("/donate/by-transaction-id/:id", async (req, res) => {
       const { id } = req.params;
       const result = await donateCollection.findOne({ transactionId: id });
       console.log(id, result);
+      res.send(result);
+    });
+
+    // all donate api call in dashboard
+    app.get("/donate", async (req, res) => {
+      const query = {};
+      const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
 
