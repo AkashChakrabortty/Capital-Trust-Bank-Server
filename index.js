@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-// SSL CCOMMERZ CODE
+// SSL commerz   CODE
 const store_id = process.env.STORE_ID;
 const store_passwd = process.env.STORE_PASSWORD;
 const is_live = false; //true for live, false for sandbox
@@ -226,7 +226,7 @@ async function run() {
         donateCollection.insertOne({
           ...donate,
           transactionId,
-          paid: false,
+          paid: "false",
         });
         res.send({ url: GatewayPageURL });
         // try {
@@ -237,7 +237,7 @@ async function run() {
         // }
       });
     });
-
+    //  donate success post method
     app.post("/donate/success", async (req, res) => {
       const { transactionId } = req.query;
 
@@ -245,10 +245,9 @@ async function run() {
       //   return res.redirect("http://localhost:3000/donate/fail");
       // }
 
-      console.log("success", transactionId);
       const result = await donateCollection.updateOne(
         { transactionId },
-        { $set: { paid: true, paidAt: new Date() } }
+        { $set: { paid: "true", paidAt: new Date() } }
       );
 
       if (result.modifiedCount > 0) {
@@ -257,7 +256,7 @@ async function run() {
         );
       }
     });
-
+    //  donate fail post method
     app.post("/donate/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
@@ -268,11 +267,18 @@ async function run() {
         res.redirect("http://localhost:3000/donate/fail");
       }
     });
-
+    // show api when users success his donate
     app.get("/donate/by-transaction-id/:id", async (req, res) => {
       const { id } = req.params;
       const result = await donateCollection.findOne({ transactionId: id });
       console.log(id, result);
+      res.send(result);
+    });
+
+    // all donate api call in dashboard
+    app.get("/donate", async (req, res) => {
+      const query = {};
+      const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -307,6 +313,12 @@ async function run() {
     // read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
       const query = {};
+      const result = await allAccountsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/bankAccounts/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
@@ -352,7 +364,10 @@ async function run() {
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await depositWithdrawCollection.find(query).toArray();
+      const result = await await depositWithdrawCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
     });
 
