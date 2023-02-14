@@ -108,6 +108,9 @@ async function run() {
     const allAccountsCollection = client
       .db("capital-trust-bank")
       .collection("bankAccounts");
+    const donateCollection = client
+      .db("capital-trust-bank")
+      .collection("donate");
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
@@ -127,9 +130,15 @@ async function run() {
     const chatInfoCollection = client
       .db("capital-trust-bank")
       .collection("chatInfo");
+    const exchangeCollection = client
+      .db("capital-trust-bank")
+      .collection("exchangeCollection");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
+    const blogsNewsCollection = client
+      .db("capital-trust-bank")
+      .collection("blogsNews");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -166,7 +175,13 @@ async function run() {
 
     /*Start Emon Backend Code  */
 
-    /*Start Emon Backend Code  */
+    /*==============Start Emon Backend Code  ============*/
+    app.post("/donate", async (req, res) => {
+      const donate = req.body;
+      console.log(donate);
+      const result = await donateCollection.insertOne(donate);
+      res.send(result);
+    });
     //post applier info in database applierCollection
     // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
@@ -177,10 +192,14 @@ async function run() {
     });
     app.post("/bankAccounts", async (req, res) => {
       const account = req.body;
-      console.log(account);
-      const result = await allAccountsCollection.insertOne(account);
+      const accountId = new ObjectId().toString().substring(0, 16);
+      console.log(account, accountId);
+      const result = await allAccountsCollection.insertOne({
+        ...account,
+        accountId,
+      });
       // send email about open account from confirmation
-      sendNewAccountEmail(account);
+      // sendNewAccountEmail(account);
       res.send(result);
     });
     // read data for emergency service req slider
@@ -217,71 +236,8 @@ async function run() {
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
-    //get all card req
-    app.get("/cardReq", async (req, res) => {
-      const query = {};
-      const applicants = await applierCollection.find(query).toArray();
-      res.send(applicants);
-    });
 
-    /*End Emon Backend Code  */
-
-    // //--------Akash Back-End Start-------------//
-
-    // //get single customer info
-    // app.get("/customer/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email: email };
-    //   const info = await usersCollection.findOne(query);
-    //   res.send(info);
-    // });
-
-    // //get all customer info
-    // app.get("/allCustomers", async (req, res) => {
-    //   const query = { role: "customer" };
-    //   const info = await usersCollection.find(query).toArray();
-    //   res.send(info);
-    // });
-    // //store all customer device info
-    // app.post("/storeDeviceInfo/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = {
-    //     email,
-    //   };
-    //   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
-    //     .length;
-    //   if (numberOfDevice <= 1) {
-    //     const ua = req.useragent;
-    //     const datetime = new Date();
-    //     const deviceInfo = {
-    //       email: email,
-    //       browser: ua.browser,
-    //       os: ua.os,
-    //       date: datetime.toISOString().slice(0, 10),
-    //     };
-    //     const result = deviceInfoCollection.insertOne(deviceInfo);
-    //     res.send(result);
-    //   } else {
-    //     res.send(false);
-    //   }
-    // });
-
-    // //Delete single customer device info
-    // app.delete("/deleteDeviceInfo/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email };
-    //   const result = await deviceInfoCollection.deleteOne(query);
-    //   res.send(result);
-    // });
-
-    // //get single customer device info
-    // app.get("/getDeviceInfo/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email };
-    //   const result = await deviceInfoCollection.find(query).toArray();
-    //   res.send(result);
-    // });
-    // //--------Akash Back-End End-------------//
+    /*========End Emon Backend Code ============= */
 
     //------------Mouri----------------//
 
@@ -291,19 +247,27 @@ async function run() {
     //   const applicants = await depositWithdrawCollection.find(query).toArray();
     //   res.send(applicants);
     // });
+    app.get("/blogsNews", async (req, res) => {
+      const query = {};
+      const news = await blogsNewsCollection.find(query).toArray();
+      res.send(news);
+    });
+    app.get("/blogsNews/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const news = await blogsNewsCollection.findOne(query);
+      res.send(news);
+    });
 
     app.get("/depositWithdraw", async (req, res) => {
-      const query = {};
+      const query = { id: ObjectId() };
       const applicant = await depositWithdrawCollection.find(query).toArray();
       res.send(applicant);
     });
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await await depositWithdrawCollection
-        .find(query)
-        .sort({ _id: -1 })
-        .toArray();
+      const result = await depositWithdrawCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -381,6 +345,13 @@ async function run() {
       res.send(info);
     });
 
+    //store customers exchange info
+    app.post("/storeExchangeInfo", async (req, res) => {
+      const info = req.body;
+      const result = await exchangeCollection.insertOne(info);
+      res.send(result);
+    });
+
     //store all customer device info
     app.post("/storeDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
@@ -446,9 +417,16 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      const query = { receiverEmail: "admin@gmail.com" };
-      const result = await chatInfoCollection.find(query).toArray();
-      res.send(result);
+      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let emailMap = {};
+      allChatInfo = allChatInfo.filter((obj) => {
+        if (!emailMap[obj.senderEmail]) {
+          emailMap[obj.senderEmail] = true;
+          return true;
+        }
+        return false;
+      });
+      res.send(allChatInfo);
     });
 
     //socket for chat
@@ -484,7 +462,6 @@ run().catch((error) => console.log(error));
 app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
-
 // app.listen(port, (req, res) => {
 //   console.log(`Capital Trust Bank server is running on port ${port}`);
 // });
@@ -492,3 +469,60 @@ app.get("/", (req, res) => {
 socketServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+// //--------Akash Back-End Start-------------//
+
+// //get single customer info
+// app.get("/customer/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = { email: email };
+//   const info = await usersCollection.findOne(query);
+//   res.send(info);
+// });
+
+// //get all customer info
+// app.get("/allCustomers", async (req, res) => {
+//   const query = { role: "customer" };
+//   const info = await usersCollection.find(query).toArray();
+//   res.send(info);
+// });
+// //store all customer device info
+// app.post("/storeDeviceInfo/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = {
+//     email,
+//   };
+//   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
+//     .length;
+//   if (numberOfDevice <= 1) {
+//     const ua = req.useragent;
+//     const datetime = new Date();
+//     const deviceInfo = {
+//       email: email,
+//       browser: ua.browser,
+//       os: ua.os,
+//       date: datetime.toISOString().slice(0, 10),
+//     };
+//     const result = deviceInfoCollection.insertOne(deviceInfo);
+//     res.send(result);
+//   } else {
+//     res.send(false);
+//   }
+// });
+
+// //Delete single customer device info
+// app.delete("/deleteDeviceInfo/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = { email };
+//   const result = await deviceInfoCollection.deleteOne(query);
+//   res.send(result);
+// });
+
+// //get single customer device info
+// app.get("/getDeviceInfo/:email", async (req, res) => {
+//   const email = req.params.email;
+//   const query = { email };
+//   const result = await deviceInfoCollection.find(query).toArray();
+//   res.send(result);
+// });
+// //--------Akash Back-End End-------------//
