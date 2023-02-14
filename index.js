@@ -298,8 +298,16 @@ async function run() {
         ...account,
         accountId,
       });
-      // send email about open account from confirmation
-      // sendNewAccountEmail(account);
+      //Akash's modify
+      const email = account.email;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          isApply: true
+        },
+      };
+      const apply = await usersCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     });
     // read data for emergency service req slider
