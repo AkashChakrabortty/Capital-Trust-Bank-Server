@@ -111,12 +111,18 @@ async function run() {
     const applierCollection = client
       .db("capital-trust-bank")
       .collection("cardAppliers");
+    // All new bank account collection
     const allAccountsCollection = client
       .db("capital-trust-bank")
       .collection("bankAccounts");
+    // Donates collection
     const donateCollection = client
       .db("capital-trust-bank")
       .collection("donate");
+    // pay bills collection
+    const payBillsCollection = client
+      .db("capital-trust-bank")
+      .collection("pay-bills");
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
@@ -136,9 +142,15 @@ async function run() {
     const chatInfoCollection = client
       .db("capital-trust-bank")
       .collection("chatInfo");
+    const exchangeCollection = client
+      .db("capital-trust-bank")
+      .collection("exchangeCollection");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
+    const blogsNewsCollection = client
+      .db("capital-trust-bank")
+      .collection("blogsNews");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -176,6 +188,116 @@ async function run() {
     /*Start Emon Backend Code  */
 
     /*==============Start Emon Backend Code  ============*/
+
+    // Start All Pay bil Method
+    app.post("/pay-bills", async (req, res) => {
+      const payBills = req.body;
+      console.log(payBills);
+      // const { donarName, donarEmail, amount } = donate;
+      // if (!donarName || !donarEmail || !amount) {
+      //   return res.send({ error: "Please provide all the information" });
+      // }
+      // const result = await donateCollection.insertOne(donate);
+      // res.send(result);
+      // const transactionId = new ObjectId().toString().substring(0, 6);
+      // const data = {
+      //   total_amount: donate.amount,
+      //   currency: donate.currency,
+      //   tran_id: transactionId, // use unique tran_id for each api call
+      //   success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
+      //   fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
+      //   cancel_url: "http://localhost:5000/pay-bills/cancel",
+      //   ipn_url: "http://localhost:5000/pay-bills/ipn",
+      //   shipping_method: "Courier",
+      //   product_name: "Computer.",
+      //   product_category: "Electronic",
+      //   product_profile: "general",
+      //   cus_name: donate.donarName,
+      //   cus_email: donate.donarEmail,
+      //   cus_add1: "Dhaka",
+      //   cus_add2: "Dhaka",
+      //   cus_city: "Dhaka",
+      //   cus_state: "Dhaka",
+      //   cus_postcode: "1000",
+      //   cus_country: "Bangladesh",
+      //   cus_phone: donate.donarPhnNumber,
+      //   cus_fax: "01711111111",
+      //   ship_name: "Customer Name",
+      //   ship_add1: "Dhaka",
+      //   ship_add2: "Dhaka",
+      //   ship_city: "Dhaka",
+      //   ship_state: "Dhaka",
+      //   ship_postcode: 1000,
+      //   ship_country: "Bangladesh",
+      // };
+
+      // const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+
+      // sslcz.init(data).then((apiResponse) => {
+      //   // Redirect the user to payment gateway
+      //   let GatewayPageURL = apiResponse.GatewayPageURL;
+
+      //   donateCollection.insertOne({
+      //     ...donate,
+      //     transactionId,
+      //     paid: "false",
+      //   });
+      //   res.send({ url: GatewayPageURL });
+      //   // try {
+      //   //   const result = donateCollection.insertOne(donate);
+      //   //   res.send({ url: GatewayPageURL });
+      //   // } catch (e) {
+      //   //   print(e);
+      //   // }
+      // });
+    });
+    //  pay-bills success post method
+    // app.post("/pay-bills/success", async (req, res) => {
+    //   const { transactionId } = req.query;
+
+    //   // if (transactionId) {
+    //   //   return res.redirect("http://localhost:3000/donate/fail");
+    //   // }
+
+    //   const result = await donateCollection.updateOne(
+    //     { transactionId },
+    //     { $set: { paid: "true", paidAt: new Date() } }
+    //   );
+
+    //   if (result.modifiedCount > 0) {
+    //     res.redirect(
+    //       `${process.env.CLIENT_URL}/donate/success?transactionId=${transactionId}`
+    //     );
+    //   }
+    // });
+    //  pay-bills fail post method
+    // app.post("/pay-bills/fail", async (req, res) => {
+    //   const { transactionId } = req.query;
+    //   if (transactionId) {
+    //     return res.redirect("http://localhost:3000/donate/fail");
+    //   }
+    //   const result = await donateCollection.deleteOne({ transactionId });
+    //   if (result.deletedCount) {
+    //     res.redirect("http://localhost:3000/donate/fail");
+    //   }
+    // });
+    // show api when users success his pay-bills
+    // app.get("/pay-bills/by-transaction-id/:id", async (req, res) => {
+    //   const { id } = req.params;
+    //   const result = await donateCollection.findOne({ transactionId: id });
+    //   console.log(id, result);
+    //   res.send(result);
+    // });
+
+    // all pay  api call in dashboard
+    // app.get("/pay-bills", async (req, res) => {
+    //   const query = {};
+    //   const result = await donateCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // END All Pay bil Method
+
+    // donate All method Start
     app.post("/donate", async (req, res) => {
       const donate = req.body;
       console.log(donate);
@@ -298,8 +420,16 @@ async function run() {
         ...account,
         accountId,
       });
-      // send email about open account from confirmation
-      // sendNewAccountEmail(account);
+      //Akash's modify
+      const email = account.email;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          isApply: true,
+        },
+      };
+      const apply = await usersCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     });
     // read data for emergency service req slider
@@ -347,19 +477,27 @@ async function run() {
     //   const applicants = await depositWithdrawCollection.find(query).toArray();
     //   res.send(applicants);
     // });
+    app.get("/blogsNews", async (req, res) => {
+      const query = {};
+      const news = await blogsNewsCollection.find(query).toArray();
+      res.send(news);
+    });
+    app.get("/blogsNews/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const news = await blogsNewsCollection.findOne(query);
+      res.send(news);
+    });
 
     app.get("/depositWithdraw", async (req, res) => {
-      const query = {};
+      const query = { _id: ObjectId() };
       const applicant = await depositWithdrawCollection.find(query).toArray();
       res.send(applicant);
     });
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await await depositWithdrawCollection
-        .find(query)
-        .sort({ _id: -1 })
-        .toArray();
+      const result = await depositWithdrawCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -397,7 +535,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/loanService/:id", async (req, res) => {
+    app.get("/loanSec/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const service = await loanServiceDataCollection.findOne(query);
@@ -435,6 +573,13 @@ async function run() {
       const query = { role: "customer" };
       const info = await usersCollection.find(query).toArray();
       res.send(info);
+    });
+
+    //store customers exchange info
+    app.post("/storeExchangeInfo", async (req, res) => {
+      const info = req.body;
+      const result = await exchangeCollection.insertOne(info);
+      res.send(result);
     });
 
     //store all customer device info
@@ -502,15 +647,21 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      const query = { receiverEmail: "admin@gmail.com" };
-      const result = await chatInfoCollection.find(query).toArray();
-      res.send(result);
+      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let emailMap = {};
+      allChatInfo = allChatInfo.filter((obj) => {
+        if (!emailMap[obj.senderEmail]) {
+          emailMap[obj.senderEmail] = true;
+          return true;
+        }
+        return false;
+      });
+      res.send(allChatInfo);
     });
 
     //socket for chat
     io.on("connection", (socket) => {
       console.log("User connected");
-
       socket.on("disconnect", () => {
         console.log("User disconnected");
       });
@@ -545,62 +696,5 @@ app.get("/", (req, res) => {
 // });
 
 socketServer.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Capital Trust Bank Server is running on port ${port}`);
 });
-
-// //--------Akash Back-End Start-------------//
-
-// //get single customer info
-// app.get("/customer/:email", async (req, res) => {
-//   const email = req.params.email;
-//   const query = { email: email };
-//   const info = await usersCollection.findOne(query);
-//   res.send(info);
-// });
-
-// //get all customer info
-// app.get("/allCustomers", async (req, res) => {
-//   const query = { role: "customer" };
-//   const info = await usersCollection.find(query).toArray();
-//   res.send(info);
-// });
-// //store all customer device info
-// app.post("/storeDeviceInfo/:email", async (req, res) => {
-//   const email = req.params.email;
-//   const query = {
-//     email,
-//   };
-//   const numberOfDevice = (await deviceInfoCollection.find(query).toArray())
-//     .length;
-//   if (numberOfDevice <= 1) {
-//     const ua = req.useragent;
-//     const datetime = new Date();
-//     const deviceInfo = {
-//       email: email,
-//       browser: ua.browser,
-//       os: ua.os,
-//       date: datetime.toISOString().slice(0, 10),
-//     };
-//     const result = deviceInfoCollection.insertOne(deviceInfo);
-//     res.send(result);
-//   } else {
-//     res.send(false);
-//   }
-// });
-
-// //Delete single customer device info
-// app.delete("/deleteDeviceInfo/:email", async (req, res) => {
-//   const email = req.params.email;
-//   const query = { email };
-//   const result = await deviceInfoCollection.deleteOne(query);
-//   res.send(result);
-// });
-
-// //get single customer device info
-// app.get("/getDeviceInfo/:email", async (req, res) => {
-//   const email = req.params.email;
-//   const query = { email };
-//   const result = await deviceInfoCollection.find(query).toArray();
-//   res.send(result);
-// });
-// //--------Akash Back-End End-------------//
