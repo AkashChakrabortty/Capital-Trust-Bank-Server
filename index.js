@@ -122,7 +122,7 @@ async function run() {
     // pay bills collection
     const payBillsCollection = client
       .db("capital-trust-bank")
-      .collection("pay-bills");
+      .collection("payBills");
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
@@ -190,67 +190,67 @@ async function run() {
     /*==============Start Emon Backend Code  ============*/
 
     // Start All Pay bil Method
-    app.post("/pay-bills", async (req, res) => {
-      const payBills = req.body;
-      console.log(payBills);
-      // const { donarName, donarEmail, amount } = donate;
-      // if (!donarName || !donarEmail || !amount) {
-      //   return res.send({ error: "Please provide all the information" });
-      // }
-      // const result = await donateCollection.insertOne(donate);
-      // res.send(result);
-      // const transactionId = new ObjectId().toString().substring(0, 6);
-      // const data = {
-      //   total_amount: donate.amount,
-      //   currency: donate.currency,
-      //   tran_id: transactionId, // use unique tran_id for each api call
-      //   success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
-      //   fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
-      //   cancel_url: "http://localhost:5000/pay-bills/cancel",
-      //   ipn_url: "http://localhost:5000/pay-bills/ipn",
-      //   shipping_method: "Courier",
-      //   product_name: "Computer.",
-      //   product_category: "Electronic",
-      //   product_profile: "general",
-      //   cus_name: donate.donarName,
-      //   cus_email: donate.donarEmail,
-      //   cus_add1: "Dhaka",
-      //   cus_add2: "Dhaka",
-      //   cus_city: "Dhaka",
-      //   cus_state: "Dhaka",
-      //   cus_postcode: "1000",
-      //   cus_country: "Bangladesh",
-      //   cus_phone: donate.donarPhnNumber,
-      //   cus_fax: "01711111111",
-      //   ship_name: "Customer Name",
-      //   ship_add1: "Dhaka",
-      //   ship_add2: "Dhaka",
-      //   ship_city: "Dhaka",
-      //   ship_state: "Dhaka",
-      //   ship_postcode: 1000,
-      //   ship_country: "Bangladesh",
-      // };
+    // app.post("/pay-bills", async (req, res) => {
+    //   const payBills = req.body;
+    //   console.log(payBills);
+    // const { donarName, donarEmail, amount } = donate;
+    // if (!donarName || !donarEmail || !amount) {
+    //   return res.send({ error: "Please provide all the information" });
+    // }
+    // const result = await donateCollection.insertOne(donate);
+    // res.send(result);
+    // const transactionId = new ObjectId().toString().substring(0, 6);
+    // const data = {
+    //   total_amount: donate.amount,
+    //   currency: donate.currency,
+    //   tran_id: transactionId, // use unique tran_id for each api call
+    //   success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
+    //   fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
+    //   cancel_url: "http://localhost:5000/pay-bills/cancel",
+    //   ipn_url: "http://localhost:5000/pay-bills/ipn",
+    //   shipping_method: "Courier",
+    //   product_name: "Computer.",
+    //   product_category: "Electronic",
+    //   product_profile: "general",
+    //   cus_name: donate.donarName,
+    //   cus_email: donate.donarEmail,
+    //   cus_add1: "Dhaka",
+    //   cus_add2: "Dhaka",
+    //   cus_city: "Dhaka",
+    //   cus_state: "Dhaka",
+    //   cus_postcode: "1000",
+    //   cus_country: "Bangladesh",
+    //   cus_phone: donate.donarPhnNumber,
+    //   cus_fax: "01711111111",
+    //   ship_name: "Customer Name",
+    //   ship_add1: "Dhaka",
+    //   ship_add2: "Dhaka",
+    //   ship_city: "Dhaka",
+    //   ship_state: "Dhaka",
+    //   ship_postcode: 1000,
+    //   ship_country: "Bangladesh",
+    // };
 
-      // const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+    // const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
 
-      // sslcz.init(data).then((apiResponse) => {
-      //   // Redirect the user to payment gateway
-      //   let GatewayPageURL = apiResponse.GatewayPageURL;
+    // sslcz.init(data).then((apiResponse) => {
+    //   // Redirect the user to payment gateway
+    //   let GatewayPageURL = apiResponse.GatewayPageURL;
 
-      //   donateCollection.insertOne({
-      //     ...donate,
-      //     transactionId,
-      //     paid: "false",
-      //   });
-      //   res.send({ url: GatewayPageURL });
-      //   // try {
-      //   //   const result = donateCollection.insertOne(donate);
-      //   //   res.send({ url: GatewayPageURL });
-      //   // } catch (e) {
-      //   //   print(e);
-      //   // }
-      // });
-    });
+    //   donateCollection.insertOne({
+    //     ...donate,
+    //     transactionId,
+    //     paid: "false",
+    //   });
+    //   res.send({ url: GatewayPageURL });
+    //   // try {
+    //   //   const result = donateCollection.insertOne(donate);
+    //   //   res.send({ url: GatewayPageURL });
+    //   // } catch (e) {
+    //   //   print(e);
+    //   // }
+    // });
+    // });
     //  pay-bills success post method
     // app.post("/pay-bills/success", async (req, res) => {
     //   const { transactionId } = req.query;
@@ -722,7 +722,15 @@ async function run() {
     });
     //
     //--------Akash Back-End End-------------//
+
     //--------Niloy Back-End Start-------------//
+
+    app.post("/pay-bills", async (req, res) => {
+      const query = req.body;
+      console.log(query);
+      const result = await payBillsCollection.insertOne(query);
+      res.send(result);
+    });
 
     //--------Niloy Back-End End-------------//
   } finally {
