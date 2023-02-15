@@ -247,6 +247,7 @@ async function run() {
     //   const applicants = await depositWithdrawCollection.find(query).toArray();
     //   res.send(applicants);
     // });
+    // -blog& news
     app.get("/blogsNews", async (req, res) => {
       const query = {};
       const news = await blogsNewsCollection.find(query).toArray();
