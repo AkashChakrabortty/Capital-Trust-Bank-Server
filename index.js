@@ -124,6 +124,9 @@ async function run() {
     const insuranceCollection = client
       .db("capital-trust-bank")
       .collection("insuranceApplicants");
+    const insuranceDataCollection = client
+      .db("capital-trust-bank")
+      .collection("insuranceData");
     const deviceInfoCollection = client
       .db("capital-trust-bank")
       .collection("deviceInfo");
@@ -285,6 +288,18 @@ async function run() {
       res.send(result);
     });
     //--------------Insurance--------------
+
+    app.get("/insuranceData", async (req, res) => {
+      const query = {};
+      const result = await insuranceDataCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/insur/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await insuranceDataCollection.findOne(query);
+      res.send(result);
+    });
     app.get("/insuranceApplicants", async (req, res) => {
       const query = {};
       const applicants = await insuranceCollection.find(query).toArray();
