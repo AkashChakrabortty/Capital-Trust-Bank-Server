@@ -111,12 +111,15 @@ async function run() {
     const applierCollection = client
       .db("capital-trust-bank")
       .collection("cardAppliers");
+    // All new bank account collection
     const allAccountsCollection = client
       .db("capital-trust-bank")
       .collection("bankAccounts");
+    // Donates collection
     const donateCollection = client
       .db("capital-trust-bank")
       .collection("donate");
+    // pay bills collection
     const payBillsCollection = client
       .db("capital-trust-bank")
       .collection("pay-bills");
@@ -286,13 +289,14 @@ async function run() {
     //   res.send(result);
     // });
 
-    // all donate api call in dashboard
-    app.get("/pay-bills", async (req, res) => {
-      const query = {};
-      const result = await donateCollection.find(query).toArray();
-      res.send(result);
-    });
+    // all pay  api call in dashboard
+    // app.get("/pay-bills", async (req, res) => {
+    //   const query = {};
+    //   const result = await donateCollection.find(query).toArray();
+    //   res.send(result);
+    // });
     // END All Pay bil Method
+
     // donate All method Start
     app.post("/donate", async (req, res) => {
       const donate = req.body;
