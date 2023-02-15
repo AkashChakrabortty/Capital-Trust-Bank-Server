@@ -139,6 +139,9 @@ async function run() {
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
+    const giveCardCollection = client
+      .db("capital-trust-bank")
+      .collection("giveCard");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -449,6 +452,17 @@ async function run() {
       };
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(apply);
+    });
+
+
+     //accept card req
+     app.post("/acceptCardReq", async (req, res) => {
+      const id = req.body.id;
+      const info = req.body;
+      const filter = { id: ObjectId(id) };
+      const giveCard = await giveCardCollection.insertOne(info);
+      const result = await applierCollection.deleteOne(filter)
+      res.send(result);
     });
 
     //Delete verification req
