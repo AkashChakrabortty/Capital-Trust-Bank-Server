@@ -459,7 +459,7 @@ async function run() {
      app.post("/acceptCardReq", async (req, res) => {
       const id = req.body.id;
       const info = req.body;
-      const filter = { id: ObjectId(id) };
+      const filter = { accountId: id };
       const giveCard = await giveCardCollection.insertOne(info);
       const result = await applierCollection.deleteOne(filter)
       res.send(result);
@@ -480,6 +480,15 @@ async function run() {
       const apply1 = await usersCollection.updateOne(filter, updateDoc);
 
       res.send(apply);
+    });
+
+
+    //Delete card req
+    app.delete("/deleteCardReq", async (req, res) => {
+      const id = req.body.id;
+      const filter = { accountId: id };
+      const result = await applierCollection.deleteOne(filter)
+      res.send(result);
     });
 
     //get single customer info
