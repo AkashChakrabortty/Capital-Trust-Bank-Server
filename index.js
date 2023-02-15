@@ -35,7 +35,7 @@ const is_live = false; //true for live, false for sandbox
 const io = new Server(socketServer, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST", "DELETE", "PATCH","PUT"],
+    methods: ["GET", "POST", "DELETE", "PATCH", "PUT"],
   },
 });
 
@@ -575,7 +575,7 @@ async function run() {
       const filter = { email: email };
       const updateDoc = {
         $set: {
-          approve: true
+          approve: true,
         },
       };
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
@@ -591,7 +591,7 @@ async function run() {
       const filter1 = { email: email };
       const updateDoc = {
         $set: {
-          isApply: false
+          isApply: false,
         },
       };
       const apply1 = await usersCollection.updateOne(filter, updateDoc);
@@ -722,6 +722,9 @@ async function run() {
     });
     //
     //--------Akash Back-End End-------------//
+    //--------Niloy Back-End Start-------------//
+
+    //--------Niloy Back-End End-------------//
   } finally {
   }
 }
