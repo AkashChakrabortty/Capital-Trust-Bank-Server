@@ -35,7 +35,7 @@ const is_live = false; //true for live, false for sandbox
 const io = new Server(socketServer, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "DELETE", "PATCH","PUT"],
   },
 });
 
@@ -142,6 +142,9 @@ async function run() {
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
+    const giveCardCollection = client
+      .db("capital-trust-bank")
+      .collection("giveCard");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -324,7 +327,7 @@ async function run() {
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.query;
       const query = { email };
-      const result = await allAccountsCollection.find(query).toArray();
+      const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
     app.get("/cardReq", async (req, res) => {
@@ -434,6 +437,73 @@ async function run() {
     //------------------End------------------//
 
     //--------Akash Back-End Start-------------//
+
+    //get single customer info
+    app.get("/customer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
+    //get single customer card info
+    app.get("/takeCard/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await allAccountsCollection.findOne(query);
+      const result = await giveCardCollection.findOne({accountId:info.accountId})
+      res.send(result);
+    });
+
+    //accept verification req
+    app.post("/verifyCustomer", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: {
+          approve: true
+        },
+      };
+      const apply = await allAccountsCollection.updateOne(filter, updateDoc);
+      res.send(apply);
+    });
+
+
+     //accept card req
+     app.post("/acceptCardReq", async (req, res) => {
+      const id = req.body.accountId;
+      const info = req.body;
+      const filter = { accountId: id };
+      const giveCard = await giveCardCollection.insertOne(info);
+      const result = await applierCollection.deleteOne(filter)
+      res.send(result);
+    });
+
+    //Delete verification req
+    app.delete("/verifyCancel", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const apply = await allAccountsCollection.deleteOne(filter);
+
+      const filter1 = { email: email };
+      const updateDoc = {
+        $set: {
+          isApply: false
+        },
+      };
+      const apply1 = await usersCollection.updateOne(filter, updateDoc);
+
+      res.send(apply);
+    });
+
+
+    //Delete card req
+    app.delete("/deleteCardReq", async (req, res) => {
+      const id = req.body.id;
+      const filter = { accountId: id };
+      const result = await applierCollection.deleteOne(filter)
+      res.send(result);
+    });
 
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
