@@ -189,118 +189,9 @@ async function run() {
 
     /*==============Start Emon Backend Code  ============*/
 
-    // Start All Pay bil Method
-    // app.post("/pay-bills", async (req, res) => {
-    //   const payBills = req.body;
-    //   console.log(payBills);
-    // const { donarName, donarEmail, amount } = donate;
-    // if (!donarName || !donarEmail || !amount) {
-    //   return res.send({ error: "Please provide all the information" });
-    // }
-    // const result = await donateCollection.insertOne(donate);
-    // res.send(result);
-    // const transactionId = new ObjectId().toString().substring(0, 6);
-    // const data = {
-    //   total_amount: donate.amount,
-    //   currency: donate.currency,
-    //   tran_id: transactionId, // use unique tran_id for each api call
-    //   success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
-    //   fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
-    //   cancel_url: "http://localhost:5000/pay-bills/cancel",
-    //   ipn_url: "http://localhost:5000/pay-bills/ipn",
-    //   shipping_method: "Courier",
-    //   product_name: "Computer.",
-    //   product_category: "Electronic",
-    //   product_profile: "general",
-    //   cus_name: donate.donarName,
-    //   cus_email: donate.donarEmail,
-    //   cus_add1: "Dhaka",
-    //   cus_add2: "Dhaka",
-    //   cus_city: "Dhaka",
-    //   cus_state: "Dhaka",
-    //   cus_postcode: "1000",
-    //   cus_country: "Bangladesh",
-    //   cus_phone: donate.donarPhnNumber,
-    //   cus_fax: "01711111111",
-    //   ship_name: "Customer Name",
-    //   ship_add1: "Dhaka",
-    //   ship_add2: "Dhaka",
-    //   ship_city: "Dhaka",
-    //   ship_state: "Dhaka",
-    //   ship_postcode: 1000,
-    //   ship_country: "Bangladesh",
-    // };
-
-    // const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
-
-    // sslcz.init(data).then((apiResponse) => {
-    //   // Redirect the user to payment gateway
-    //   let GatewayPageURL = apiResponse.GatewayPageURL;
-
-    //   donateCollection.insertOne({
-    //     ...donate,
-    //     transactionId,
-    //     paid: "false",
-    //   });
-    //   res.send({ url: GatewayPageURL });
-    //   // try {
-    //   //   const result = donateCollection.insertOne(donate);
-    //   //   res.send({ url: GatewayPageURL });
-    //   // } catch (e) {
-    //   //   print(e);
-    //   // }
-    // });
-    // });
-    //  pay-bills success post method
-    // app.post("/pay-bills/success", async (req, res) => {
-    //   const { transactionId } = req.query;
-
-    //   // if (transactionId) {
-    //   //   return res.redirect("http://localhost:3000/donate/fail");
-    //   // }
-
-    //   const result = await donateCollection.updateOne(
-    //     { transactionId },
-    //     { $set: { paid: "true", paidAt: new Date() } }
-    //   );
-
-    //   if (result.modifiedCount > 0) {
-    //     res.redirect(
-    //       `${process.env.CLIENT_URL}/donate/success?transactionId=${transactionId}`
-    //     );
-    //   }
-    // });
-    //  pay-bills fail post method
-    // app.post("/pay-bills/fail", async (req, res) => {
-    //   const { transactionId } = req.query;
-    //   if (transactionId) {
-    //     return res.redirect("http://localhost:3000/donate/fail");
-    //   }
-    //   const result = await donateCollection.deleteOne({ transactionId });
-    //   if (result.deletedCount) {
-    //     res.redirect("http://localhost:3000/donate/fail");
-    //   }
-    // });
-    // show api when users success his pay-bills
-    // app.get("/pay-bills/by-transaction-id/:id", async (req, res) => {
-    //   const { id } = req.params;
-    //   const result = await donateCollection.findOne({ transactionId: id });
-    //   console.log(id, result);
-    //   res.send(result);
-    // });
-
-    // all pay  api call in dashboard
-    // app.get("/pay-bills", async (req, res) => {
-    //   const query = {};
-    //   const result = await donateCollection.find(query).toArray();
-    //   res.send(result);
-    // });
-    // END All Pay bil Method
-
     // donate All method Start
     app.post("/donate", async (req, res) => {
       const donate = req.body;
-      console.log(donate);
       const { donarName, donarEmail, amount } = donate;
       if (!donarName || !donarEmail || !amount) {
         return res.send({ error: "Please provide all the information" });
@@ -350,6 +241,7 @@ async function run() {
           transactionId,
           paid: "false",
         });
+        console.log(GatewayPageURL);
         res.send({ url: GatewayPageURL });
         // try {
         //   const result = donateCollection.insertOne(donate);
@@ -393,7 +285,6 @@ async function run() {
     app.get("/donate/by-transaction-id/:id", async (req, res) => {
       const { id } = req.params;
       const result = await donateCollection.findOne({ transactionId: id });
-      console.log(id, result);
       res.send(result);
     });
 
@@ -408,14 +299,12 @@ async function run() {
     // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
       const applier = req.body;
-      console.log(applier);
       const result = await applierCollection.insertOne(applier);
       res.send(result);
     });
     app.post("/bankAccounts", async (req, res) => {
       const account = req.body;
       const accountId = new ObjectId().toString().substring(0, 16);
-      console.log(account, accountId);
       const result = await allAccountsCollection.insertOne({
         ...account,
         accountId,
@@ -454,7 +343,6 @@ async function run() {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
-      console.log("card apply", result);
     });
 
     app.get("/users", async (req, res) => {
@@ -504,7 +392,6 @@ async function run() {
 
     app.post("/depositWithdraw", async (req, res) => {
       const applicant = req.body;
-      console.log(applicant);
       const result = await depositWithdrawCollection.insertOne(applicant);
       res.send(result);
     });
@@ -523,7 +410,6 @@ async function run() {
 
     app.post("/insuranceApplicants", async (req, res) => {
       const applicant = req.body;
-      console.log(applicant);
       const result = await insuranceCollection.insertOne(applicant);
       res.send(result);
     });
@@ -551,7 +437,6 @@ async function run() {
 
     app.post("/applicants", async (req, res) => {
       const applicant = req.body;
-      console.log(applicant);
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
     });
@@ -700,13 +585,9 @@ async function run() {
 
     //socket for chat
     io.on("connection", (socket) => {
-      console.log("User connected");
-      socket.on("disconnect", () => {
-        console.log("User disconnected");
-      });
+      socket.on("disconnect", () => {});
 
       socket.on("send message", async (data) => {
-        console.log(data);
         if (data.senderEmail != "admin@gmail.com") {
           const receiverInfo = await usersCollection.findOne({
             email: "admin@gmail.com",
@@ -725,12 +606,113 @@ async function run() {
 
     //--------Niloy Back-End Start-------------//
 
+    // app.post("/pay-bills", async (req, res) => {
+    //   const query = req.body;
+    //   console.log(query);
+    //   const result = await payBillsCollection.insertOne(query);
+    //   res.send(result);
+    // });
+
+    // Start All Pay bil Method
     app.post("/pay-bills", async (req, res) => {
-      const query = req.body;
-      console.log(query);
-      const result = await payBillsCollection.insertOne(query);
+      const payBills = req.body;
+      console.log(payBills);
+      const { name, phnNumber, amount, billType, billSNumber } = payBills;
+      const transactionId = new ObjectId().toString().substring(0, 6);
+
+      const data = {
+        total_amount: amount,
+        currency: "BDT",
+        tran_id: transactionId, // use unique tran_id for each api call
+        success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
+        fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
+        cancel_url: "http://localhost:5000/pay-bills/cancel",
+        ipn_url: "http://localhost:5000/pay-bills/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: billType,
+        product_profile: "general",
+        cus_name: name,
+        cus_email: "demon@gmail.com",
+        cus_add1: "Dhaka",
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: phnNumber,
+        cus_fax: phnNumber,
+        ship_name: name,
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+      console.log(data);
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+
+      sslcz.init(data).then((apiResponse) => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+
+        payBillsCollection.insertOne({
+          ...payBills,
+          transactionId,
+          BillType: billType,
+          BillNumber: billSNumber,
+          paid: "false",
+        });
+        res.send({ url: GatewayPageURL });
+      });
+    });
+
+    //  pay-bills success post method
+    app.post("/pay-bills/success", async (req, res) => {
+      const { transactionId } = req.query;
+
+      // if (transactionId) {
+      //   return res.redirect("http://localhost:3000/donate/fail");
+      // }
+
+      const result = await payBillsCollection.updateOne(
+        { transactionId },
+        { $set: { paid: "true", paidAt: new Date() } }
+      );
+
+      if (result.modifiedCount > 0) {
+        res.redirect(
+          `${process.env.CLIENT_URL}/pay-bills/success?transactionId=${transactionId}`
+        );
+      }
+    });
+    //  pay-bills fail post method
+    app.post("/pay-bills/fail", async (req, res) => {
+      const { transactionId } = req.query;
+      if (transactionId) {
+        return res.redirect("http://localhost:3000/pay-bills/fail");
+      }
+      const result = await payBillsCollection.deleteOne({ transactionId });
+      if (result.deletedCount) {
+        res.redirect("http://localhost:3000/pay-bills/fail");
+      }
+    });
+    // show api when users success his pay-bills
+    app.get("/pay-bills/by-transaction-id/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await payBillsCollection.findOne({ transactionId: id });
+      console.log(id, result);
       res.send(result);
     });
+
+    // all pay  api call in dashboard
+    app.get("/pay-bills", async (req, res) => {
+      const query = {};
+      const result = await payBillsCollection.find(query).toArray();
+      res.send(result);
+    });
+    // END All Pay bil Method
 
     //--------Niloy Back-End End-------------//
   } finally {
