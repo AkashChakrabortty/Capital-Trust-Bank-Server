@@ -142,7 +142,9 @@ async function run() {
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
-
+    const chatNotificationCollection = client
+      .db("capital-trust-bank")
+      .collection("chatNotification");
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -559,11 +561,32 @@ async function run() {
       res.send(result);
     });
 
+     //Delete single customer device info
+     app.delete("/notificationDelete", async (req, res) => {
+      const senderEmail = req.body.senderEmail;
+      const receiverEmail = req.body.receiverEmail;
+      const query = {   
+        $or: [
+        { senderEmail: senderEmail, receiverEmail: receiverEmail },
+        { senderEmail: receiverEmail, receiverEmail: senderEmail},
+           ] };
+      const result = await chatNotificationCollection.deleteMany(query);
+      res.send(result);
+    });
+
     //get single customer device info
     app.get("/getDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get single customer device info
+     app.get("/getChatNotificationInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { receiverEmail:email };
+      const result = await chatNotificationCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -616,8 +639,11 @@ async function run() {
           data.receiverName = receiverInfo.name;
         }
         //store chat into the database
-        const storeChatInfo = chatInfoCollection.insertOne(data);
+        const storeChatInfo = await chatInfoCollection.insertOne(data);
+        //store chat into the database
+         const storeChatNotificationInfo = await chatNotificationCollection.insertOne(data);
         io.emit("messageTransfer", data);
+        io.emit("messageNotificationTransfer", data);
       });
     });
     //
