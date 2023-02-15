@@ -441,6 +441,15 @@ async function run() {
       res.send(info);
     });
 
+    //get single customer card info
+    app.get("/takeCard/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await allAccountsCollection.findOne(query);
+      const result = await giveCardCollection.findOne({accountId:info.accountId})
+      res.send(result);
+    });
+
     //accept verification req
     app.post("/verifyCustomer", async (req, res) => {
       const email = req.body.email;
@@ -457,7 +466,7 @@ async function run() {
 
      //accept card req
      app.post("/acceptCardReq", async (req, res) => {
-      const id = req.body.id;
+      const id = req.body.accountId;
       const info = req.body;
       const filter = { accountId: id };
       const giveCard = await giveCardCollection.insertOne(info);
