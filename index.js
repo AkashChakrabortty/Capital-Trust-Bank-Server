@@ -35,7 +35,7 @@ const is_live = false; //true for live, false for sandbox
 const io = new Server(socketServer, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST", "DELETE", "PATCH","PUT"],
+    methods: ["GET", "POST", "DELETE", "PATCH", "PUT"],
   },
 });
 
@@ -111,15 +111,18 @@ async function run() {
     const applierCollection = client
       .db("capital-trust-bank")
       .collection("cardAppliers");
+    // All new bank account collection
     const allAccountsCollection = client
       .db("capital-trust-bank")
       .collection("bankAccounts");
+    // Donates collection
     const donateCollection = client
       .db("capital-trust-bank")
       .collection("donate");
+    // pay bills collection
     const payBillsCollection = client
       .db("capital-trust-bank")
-      .collection("pay-bills");
+      .collection("payBills");
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
@@ -139,12 +142,18 @@ async function run() {
     const chatInfoCollection = client
       .db("capital-trust-bank")
       .collection("chatInfo");
+    const exchangeCollection = client
+      .db("capital-trust-bank")
+      .collection("exchangeCollection");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
+    const blogsNewsCollection = client
+      .db("capital-trust-bank")
+      .collection("blogsNews");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -186,7 +195,6 @@ async function run() {
     // donate All method Start
     app.post("/donate", async (req, res) => {
       const donate = req.body;
-      console.log(donate);
       const { donarName, donarEmail, amount } = donate;
       if (!donarName || !donarEmail || !amount) {
         return res.send({ error: "Please provide all the information" });
@@ -236,6 +244,7 @@ async function run() {
           transactionId,
           paid: "false",
         });
+        console.log(GatewayPageURL);
         res.send({ url: GatewayPageURL });
         // try {
         //   const result = donateCollection.insertOne(donate);
@@ -279,7 +288,6 @@ async function run() {
     app.get("/donate/by-transaction-id/:id", async (req, res) => {
       const { id } = req.params;
       const result = await donateCollection.findOne({ transactionId: id });
-      console.log(id, result);
       res.send(result);
     });
 
@@ -294,14 +302,12 @@ async function run() {
     // applier for credit card
     app.post("/cardAppliers", async (req, res) => {
       const applier = req.body;
-      console.log(applier);
       const result = await applierCollection.insertOne(applier);
       res.send(result);
     });
     app.post("/bankAccounts", async (req, res) => {
       const account = req.body;
       const accountId = new ObjectId().toString().substring(0, 16);
-      console.log(account, accountId);
       const result = await allAccountsCollection.insertOne({
         ...account,
         accountId,
@@ -340,7 +346,6 @@ async function run() {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
-      console.log("card apply", result);
     });
 
     app.get("/users", async (req, res) => {
@@ -363,25 +368,33 @@ async function run() {
     //   const applicants = await depositWithdrawCollection.find(query).toArray();
     //   res.send(applicants);
     // });
+    // -blog& news
+    app.get("/blogsNews", async (req, res) => {
+      const query = {};
+      const news = await blogsNewsCollection.find(query).toArray();
+      res.send(news);
+    });
+    app.get("/blogsNews/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const news = await blogsNewsCollection.findOne(query);
+      res.send(news);
+    });
 
     app.get("/depositWithdraw", async (req, res) => {
-      const query = {};
+      const query = { _id: ObjectId() };
       const applicant = await depositWithdrawCollection.find(query).toArray();
       res.send(applicant);
     });
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await await depositWithdrawCollection
-        .find(query)
-        .sort({ _id: -1 })
-        .toArray();
+      const result = await depositWithdrawCollection.find(query).toArray();
       res.send(result);
     });
 
     app.post("/depositWithdraw", async (req, res) => {
       const applicant = req.body;
-      console.log(applicant);
       const result = await depositWithdrawCollection.insertOne(applicant);
       res.send(result);
     });
@@ -400,7 +413,6 @@ async function run() {
 
     app.post("/insuranceApplicants", async (req, res) => {
       const applicant = req.body;
-      console.log(applicant);
       const result = await insuranceCollection.insertOne(applicant);
       res.send(result);
     });
@@ -413,7 +425,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/loanService/:id", async (req, res) => {
+    app.get("/loanSec/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const service = await loanServiceDataCollection.findOne(query);
@@ -428,7 +440,6 @@ async function run() {
 
     app.post("/applicants", async (req, res) => {
       const applicant = req.body;
-      console.log(applicant);
       const result = await applicantsCollection.insertOne(applicant);
       res.send(result);
     });
@@ -451,7 +462,9 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const info = await allAccountsCollection.findOne(query);
-      const result = await giveCardCollection.findOne({accountId:info.accountId})
+      const result = await giveCardCollection.findOne({
+        accountId: info.accountId,
+      });
       res.send(result);
     });
 
@@ -461,21 +474,20 @@ async function run() {
       const filter = { email: email };
       const updateDoc = {
         $set: {
-          approve: true
+          approve: true,
         },
       };
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(apply);
     });
 
-
-     //accept card req
-     app.post("/acceptCardReq", async (req, res) => {
+    //accept card req
+    app.post("/acceptCardReq", async (req, res) => {
       const id = req.body.accountId;
       const info = req.body;
       const filter = { accountId: id };
       const giveCard = await giveCardCollection.insertOne(info);
-      const result = await applierCollection.deleteOne(filter)
+      const result = await applierCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -488,7 +500,7 @@ async function run() {
       const filter1 = { email: email };
       const updateDoc = {
         $set: {
-          isApply: false
+          isApply: false,
         },
       };
       const apply1 = await usersCollection.updateOne(filter, updateDoc);
@@ -496,12 +508,11 @@ async function run() {
       res.send(apply);
     });
 
-
     //Delete card req
     app.delete("/deleteCardReq", async (req, res) => {
       const id = req.body.id;
       const filter = { accountId: id };
-      const result = await applierCollection.deleteOne(filter)
+      const result = await applierCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -519,16 +530,22 @@ async function run() {
       const info = await allAccountsCollection.find(query).toArray();
       const user = await usersCollection.find({}).toArray();
 
-      let result =[];
-      info.map((singleInfo)=>{
-      user.map(singleUser => {
-       if(singleInfo.email === singleUser.email){
-       singleInfo['img'] = singleUser.image;
-       result.push(singleInfo);
-       }
-      })
-    
-      })
+      let result = [];
+      info.map((singleInfo) => {
+        user.map((singleUser) => {
+          if (singleInfo.email === singleUser.email) {
+            singleInfo["img"] = singleUser.image;
+            result.push(singleInfo);
+          }
+        });
+      });
+      res.send(result);
+    });
+
+    //store customers exchange info
+    app.post("/storeExchangeInfo", async (req, res) => {
+      const info = req.body;
+      const result = await exchangeCollection.insertOne(info);
       res.send(result);
     });
 
@@ -597,20 +614,23 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      const query = { receiverEmail: "admin@gmail.com" };
-      const result = await chatInfoCollection.find(query).toArray();
-      res.send(result);
+      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let emailMap = {};
+      allChatInfo = allChatInfo.filter((obj) => {
+        if (!emailMap[obj.senderEmail]) {
+          emailMap[obj.senderEmail] = true;
+          return true;
+        }
+        return false;
+      });
+      res.send(allChatInfo);
     });
 
     //socket for chat
     io.on("connection", (socket) => {
-      console.log("User connected");
-      socket.on("disconnect", () => {
-        console.log("User disconnected");
-      });
+      socket.on("disconnect", () => {});
 
       socket.on("send message", async (data) => {
-        console.log(data);
         if (data.senderEmail != "admin@gmail.com") {
           const receiverInfo = await usersCollection.findOne({
             email: "admin@gmail.com",
@@ -626,6 +646,123 @@ async function run() {
     });
     //
     //--------Akash Back-End End-------------//
+
+    //--------Niloy Back-End Start-------------//
+
+    // app.post("/pay-bills", async (req, res) => {
+    //   const query = req.body;
+    //   console.log(query);
+    //   const result = await payBillsCollection.insertOne(query);
+    //   res.send(result);
+    // });
+    // all donate api call in dashboard
+    app.get("/pay-bills", async (req, res) => {
+      const query = {};
+      const result = await payBillsCollection.find(query).toArray();
+      res.send(result);
+    });
+    // Start All Pay bil Method
+    app.post("/pay-bills", async (req, res) => {
+      const payBills = req.body;
+      console.log(payBills);
+      const { name, phnNumber, amount, billType, billSNumber } = payBills;
+      const transactionId = new ObjectId().toString().substring(0, 6);
+
+      const data = {
+        total_amount: amount,
+        currency: "BDT",
+        tran_id: transactionId, // use unique tran_id for each api call
+        success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
+        fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
+        cancel_url: "http://localhost:5000/pay-bills/cancel",
+        ipn_url: "http://localhost:5000/pay-bills/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: billType,
+        product_profile: "general",
+        cus_name: name,
+        cus_email: "demon@gmail.com",
+        cus_add1: "Dhaka",
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: phnNumber,
+        cus_fax: phnNumber,
+        ship_name: name,
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+      console.log(data);
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+
+      sslcz.init(data).then((apiResponse) => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+
+        payBillsCollection.insertOne({
+          ...payBills,
+          transactionId,
+          BillType: billType,
+          BillNumber: billSNumber,
+          paid: "false",
+        });
+        res.send({ url: GatewayPageURL });
+      });
+    });
+
+    //  pay-bills success post method
+    app.post("/pay-bills/success", async (req, res) => {
+      const { transactionId } = req.query;
+
+      // if (transactionId) {
+      //   return res.redirect("http://localhost:3000/donate/fail");
+      // }
+
+      const result = await payBillsCollection.updateOne(
+        { transactionId },
+        { $set: { paid: "true", paidAt: new Date() } }
+      );
+
+      if (result.modifiedCount > 0) {
+        res.redirect(
+          `${process.env.CLIENT_URL}/pay-bills/success?transactionId=${transactionId}`
+        );
+      }
+    });
+    //  pay-bills fail post method
+    app.post("/pay-bills/fail", async (req, res) => {
+      const { transactionId } = req.query;
+      if (transactionId) {
+        return res.redirect("http://localhost:3000/pay-bills/fail");
+      }
+      const result = await payBillsCollection.deleteOne({ transactionId });
+      if (result.deletedCount) {
+        res.redirect("http://localhost:3000/pay-bills/fail");
+      }
+    });
+    // show api when users success his pay-bills
+    app.get("/pay-bills/by-transaction-id/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await payBillsCollection.findOne({ transactionId: id });
+      console.log(id, result);
+      res.send(result);
+    });
+
+    // all pay  api call in dashboard
+    app.get("/pay-bills", async (req, res) => {
+      const query = {};
+      const result = await payBillsCollection.find(query).toArray();
+      res.send(result);
+    });
+    // END All Pay bil Method
+
+    //--------Niloy Back-End End-------------//
   } finally {
   }
 }
