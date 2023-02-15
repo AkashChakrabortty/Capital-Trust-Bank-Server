@@ -35,7 +35,7 @@ const is_live = false; //true for live, false for sandbox
 const io = new Server(socketServer, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "DELETE", "PATCH","PUT"],
   },
 });
 
@@ -441,7 +441,7 @@ async function run() {
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await allAccountsCollection.find(query).toArray();
+      const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
     app.get("/cardReq", async (req, res) => {
@@ -560,6 +560,44 @@ async function run() {
     //------------------End------------------//
 
     //--------Akash Back-End Start-------------//
+
+    //get single customer info
+    app.get("/customer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
+    //accept verification req
+    app.post("/verifyCustomer", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: {
+          approve: true
+        },
+      };
+      const apply = await allAccountsCollection.updateOne(filter, updateDoc);
+      res.send(apply);
+    });
+
+    //Delete verification req
+    app.delete("/verifyCancel", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const apply = await allAccountsCollection.deleteOne(filter);
+
+      const filter1 = { email: email };
+      const updateDoc = {
+        $set: {
+          isApply: false
+        },
+      };
+      const apply1 = await usersCollection.updateOne(filter, updateDoc);
+
+      res.send(apply);
+    });
 
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
