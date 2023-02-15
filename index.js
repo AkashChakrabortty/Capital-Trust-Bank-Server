@@ -139,9 +139,15 @@ async function run() {
     const chatInfoCollection = client
       .db("capital-trust-bank")
       .collection("chatInfo");
+    const exchangeCollection = client
+      .db("capital-trust-bank")
+      .collection("exchangeCollection");
     const depositWithdrawCollection = client
       .db("capital-trust-bank")
       .collection("depositWithdraw");
+    const blogsNewsCollection = client
+      .db("capital-trust-bank")
+      .collection("blogsNews");
 
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -467,19 +473,27 @@ async function run() {
     //   const applicants = await depositWithdrawCollection.find(query).toArray();
     //   res.send(applicants);
     // });
+    app.get("/blogsNews", async (req, res) => {
+      const query = {};
+      const news = await blogsNewsCollection.find(query).toArray();
+      res.send(news);
+    });
+    app.get("/blogsNews/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const news = await blogsNewsCollection.findOne(query);
+      res.send(news);
+    });
 
     app.get("/depositWithdraw", async (req, res) => {
-      const query = {};
+      const query = { _id: ObjectId() };
       const applicant = await depositWithdrawCollection.find(query).toArray();
       res.send(applicant);
     });
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await await depositWithdrawCollection
-        .find(query)
-        .sort({ _id: -1 })
-        .toArray();
+      const result = await depositWithdrawCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -517,7 +531,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/loanService/:id", async (req, res) => {
+    app.get("/loanSec/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const service = await loanServiceDataCollection.findOne(query);
@@ -555,6 +569,13 @@ async function run() {
       const query = { role: "customer" };
       const info = await usersCollection.find(query).toArray();
       res.send(info);
+    });
+
+    //store customers exchange info
+    app.post("/storeExchangeInfo", async (req, res) => {
+      const info = req.body;
+      const result = await exchangeCollection.insertOne(info);
+      res.send(result);
     });
 
     //store all customer device info
@@ -622,9 +643,16 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      const query = { receiverEmail: "admin@gmail.com" };
-      const result = await chatInfoCollection.find(query).toArray();
-      res.send(result);
+      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let emailMap = {};
+      allChatInfo = allChatInfo.filter((obj) => {
+        if (!emailMap[obj.senderEmail]) {
+          emailMap[obj.senderEmail] = true;
+          return true;
+        }
+        return false;
+      });
+      res.send(allChatInfo);
     });
 
     //socket for chat
