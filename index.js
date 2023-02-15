@@ -515,9 +515,21 @@ async function run() {
 
     //get all customer info
     app.get("/allCustomers", async (req, res) => {
-      const query = { role: "customer" };
-      const info = await usersCollection.find(query).toArray();
-      res.send(info);
+      const query = { approve: true };
+      const info = await allAccountsCollection.find(query).toArray();
+      const user = await usersCollection.find({}).toArray();
+
+      let result =[];
+      info.map((singleInfo)=>{
+      user.map(singleUser => {
+       if(singleInfo.email === singleUser.email){
+       singleInfo['img'] = singleUser.image;
+       result.push(singleInfo);
+       }
+      })
+    
+      })
+      res.send(result);
     });
 
     //store all customer device info
