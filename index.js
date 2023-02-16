@@ -336,14 +336,15 @@ async function run() {
       );
       res.send(result);
     });
-    // read data for emergency service req slider
+    //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
       const query = {};
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
     app.get("/bankAccounts/:email", async (req, res) => {
-      const email = req.query;
+      const email = req.params.email;
+      console.log(email);
       const query = { email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
