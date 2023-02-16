@@ -840,9 +840,6 @@ run().catch((error) => console.log(error));
 app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
-// app.listen(port, (req, res) => {
-//   console.log(`Capital Trust Bank server is running on port ${port}`);
-// });
 
 socketServer.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
