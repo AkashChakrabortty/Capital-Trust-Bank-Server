@@ -154,16 +154,16 @@ async function run() {
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
-    const blogsNewsCollection = client
-      .db("capital-trust-bank")
-      .collection("blogsNews");
-
     const chatNotificationCollection = client
       .db("capital-trust-bank")
       .collection("chatNotification");
     const verifyNotificationCollection = client
       .db("capital-trust-bank")
       .collection("verifyNotification");
+    const blogsNewsCollection = client
+      .db("capital-trust-bank")
+      .collection("blogsNews");
+
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -344,7 +344,6 @@ async function run() {
     });
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email);
       const query = { email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
