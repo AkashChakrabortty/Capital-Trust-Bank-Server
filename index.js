@@ -158,6 +158,12 @@ async function run() {
       .db("capital-trust-bank")
       .collection("blogsNews");
 
+    const chatNotificationCollection = client
+      .db("capital-trust-bank")
+      .collection("chatNotification");
+    const verifyNotificationCollection = client
+      .db("capital-trust-bank")
+      .collection("verifyNotification");
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -325,6 +331,9 @@ async function run() {
         },
       };
       const apply = await usersCollection.updateOne(filter, updateDoc, options);
+      const verifyNotification = await verifyNotificationCollection.insertOne(
+        account
+      );
       res.send(result);
     });
     // read data for emergency service req slider
@@ -486,6 +495,7 @@ async function run() {
     //accept verification req
     app.post("/verifyCustomer", async (req, res) => {
       const email = req.body.email;
+      const info = req.body;
       const filter = { email: email };
       const updateDoc = {
         $set: {
@@ -531,11 +541,25 @@ async function run() {
       res.send(result);
     });
 
+    //Delete verification req notification
+    app.delete("/verificationNotificationDelete", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const result = await verifyNotificationCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
+    //get all verification info
+    app.get("/getVerifyNotificationInfo", async (req, res) => {
+      const info = await verifyNotificationCollection.find({}).toArray();
       res.send(info);
     });
 
@@ -596,11 +620,33 @@ async function run() {
       res.send(result);
     });
 
+    //Delete single customer device info
+    app.delete("/notificationDelete", async (req, res) => {
+      const senderEmail = req.body.senderEmail;
+      const receiverEmail = req.body.receiverEmail;
+      const query = {
+        $or: [
+          { senderEmail: senderEmail, receiverEmail: receiverEmail },
+          { senderEmail: receiverEmail, receiverEmail: senderEmail },
+        ],
+      };
+      const result = await chatNotificationCollection.deleteMany(query);
+      res.send(result);
+    });
+
     //get single customer device info
     app.get("/getDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get single customer device info
+    app.get("/getChatNotificationInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { receiverEmail: email };
+      const result = await chatNotificationCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -655,8 +701,16 @@ async function run() {
           data.receiverName = receiverInfo.name;
         }
         //store chat into the database
-        const storeChatInfo = chatInfoCollection.insertOne(data);
+        const storeChatInfo = await chatInfoCollection.insertOne(data);
+        //store chat into the database
+        const storeChatNotificationInfo =
+          await chatNotificationCollection.insertOne(data);
         io.emit("messageTransfer", data);
+        io.emit("messageNotificationTransfer", data);
+      });
+
+      socket.on("send verification", async (data) => {
+        io.emit("verificationNotificationTransfer", data);
       });
     });
     //
