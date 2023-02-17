@@ -348,6 +348,17 @@ async function run() {
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
+    app.get("/approved", async (req, res) => {
+      const query = { approve: true };
+      const result = await allAccountsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/approved/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await allAccountsCollection.findOne(query);
+      res.send(result);
+    });
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
@@ -394,14 +405,17 @@ async function run() {
     });
 
     app.get("/depositWithdraw", async (req, res) => {
-      const query = { _id: ObjectId() };
+      const query = req.body;
       const applicant = await depositWithdrawCollection.find(query).toArray();
       res.send(applicant);
     });
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await depositWithdrawCollection.find(query).toArray();
+      const result = await depositWithdrawCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
     });
 
