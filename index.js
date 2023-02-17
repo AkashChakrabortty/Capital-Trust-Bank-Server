@@ -322,10 +322,12 @@ async function run() {
     });
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { email };
+      const query = { email:email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
+
+
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
@@ -641,7 +643,9 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      let allChatInfo = await chatInfoCollection.find({ senderEmail: { $ne: "admin@gmail.com" } }).toArray();
+      let allChatInfo = await chatInfoCollection
+        .find({ senderEmail: { $ne: "admin@gmail.com" } })
+        .toArray();
       let emailMap = {};
       allChatInfo = allChatInfo.filter((obj) => {
         if (!emailMap[obj.senderEmail]) {
@@ -673,9 +677,9 @@ async function run() {
         io.emit("messageTransfer", data);
         io.emit("messageNotificationTransfer", data);
       });
-      socket.on('send verification', async(data)=> {
-        io.emit('verificationNotificationTransfer',data)
-      })
+      socket.on("send verification", async (data) => {
+        io.emit("verificationNotificationTransfer", data);
+      });
     });
     //
     //--------Akash Back-End End-------------//
