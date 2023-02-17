@@ -78,9 +78,7 @@ function sendNewAccountEmail(account) {
     },
     function (error, info) {
       if (error) {
-        console.log("Email send error", error);
       } else {
-        console.log("Email sent: " + info);
       }
     }
   );
