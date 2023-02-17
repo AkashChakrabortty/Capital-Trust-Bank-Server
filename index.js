@@ -334,7 +334,7 @@ async function run() {
     });
     //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
-      const query = {};
+      const query = {approve: false};
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
