@@ -267,10 +267,6 @@ async function run() {
     app.post("/donate/success", async (req, res) => {
       const { transactionId } = req.query;
 
-      // if (transactionId) {
-      //   return res.redirect("http://localhost:3000/donate/fail");
-      // }
-
       const result = await donateCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -286,11 +282,11 @@ async function run() {
     app.post("/donate/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("http://localhost:3000/donate/fail");
+        return res.redirect("https://capital-trust-bank-ee791.web.app/donate/fail");
       }
       const result = await donateCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
-        res.redirect("http://localhost:3000/donate/fail");
+        res.redirect("https://capital-trust-bank-ee791.web.app/donate/fail");
       }
     });
     // show api when users success his donate
@@ -804,9 +800,6 @@ async function run() {
     app.post("/pay-bills/success", async (req, res) => {
       const { transactionId } = req.query;
 
-      // if (transactionId) {
-      //   return res.redirect("http://localhost:3000/donate/fail");
-      // }
 
       const result = await payBillsCollection.updateOne(
         { transactionId },
@@ -823,11 +816,11 @@ async function run() {
     app.post("/pay-bills/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("http://localhost:3000/pay-bills/fail");
+        return res.redirect("https://capital-trust-bank-ee791.web.app/pay-bills/fail");
       }
       const result = await payBillsCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
-        res.redirect("http://localhost:3000/pay-bills/fail");
+        res.redirect("https://capital-trust-bank-ee791.web.app/pay-bills/fail");
       }
     });
     // show api when users success his pay-bills
