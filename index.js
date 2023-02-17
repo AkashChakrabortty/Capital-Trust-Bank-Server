@@ -858,4 +858,3 @@ app.get("/", (req, res) => {
 socketServer.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
 });
-module.exports = app;
