@@ -50,7 +50,6 @@ function sendNewAccountEmail(account) {
     email,
     accountType,
   } = account;
-  console.log(account);
   // This is your API key that you retrieve from www.mailgun.com/cp (free up to 10K monthly emails)
   const auth = {
     auth: {
@@ -58,9 +57,6 @@ function sendNewAccountEmail(account) {
       domain: process.env.EMAIL_SEND_DOMAIN,
     },
   };
-
-  console.log(process.env.EMAIL_SEND_KEY, process.env.EMAIL_SEND_DOMAIN);
-
   const transporter = nodemailer.createTransport(mg(auth));
   transporter.sendMail(
     {
@@ -82,9 +78,7 @@ function sendNewAccountEmail(account) {
     },
     function (error, info) {
       if (error) {
-        console.log("Email send error", error);
       } else {
-        console.log("Email sent: " + info);
       }
     }
   );
@@ -154,16 +148,16 @@ async function run() {
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
-    const blogsNewsCollection = client
-      .db("capital-trust-bank")
-      .collection("blogsNews");
-
     const chatNotificationCollection = client
       .db("capital-trust-bank")
       .collection("chatNotification");
     const verifyNotificationCollection = client
       .db("capital-trust-bank")
       .collection("verifyNotification");
+    const blogsNewsCollection = client
+      .db("capital-trust-bank")
+      .collection("blogsNews");
+
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -195,10 +189,6 @@ async function run() {
       res.send(result);
     });
 
-    // ------Start of Rakib Khan Backend -------
-
-    /*Start Emon Backend Code  */
-
     /*==============Start Emon Backend Code  ============*/
 
     // donate All method Start
@@ -208,8 +198,6 @@ async function run() {
       if (!donarName || !donarEmail || !amount) {
         return res.send({ error: "Please provide all the information" });
       }
-      // const result = await donateCollection.insertOne(donate);
-      // res.send(result);
       const transactionId = new ObjectId().toString().substring(0, 6);
       const data = {
         total_amount: donate.amount,
@@ -253,24 +241,12 @@ async function run() {
           transactionId,
           paid: "false",
         });
-        console.log(GatewayPageURL);
         res.send({ url: GatewayPageURL });
-        // try {
-        //   const result = donateCollection.insertOne(donate);
-        //   res.send({ url: GatewayPageURL });
-        // } catch (e) {
-        //   print(e);
-        // }
       });
     });
     //  donate success post method
     app.post("/donate/success", async (req, res) => {
       const { transactionId } = req.query;
-
-      // if (transactionId) {
-      //   return res.redirect("http://localhost:3000/donate/fail");
-      // }
-
       const result = await donateCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -338,17 +314,18 @@ async function run() {
     });
     //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
-      const query = {};
+      const query = {approve:false};
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email);
-      const query = { email };
+      const query = { email:email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
+
+
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
@@ -374,14 +351,6 @@ async function run() {
     /*========End Emon Backend Code ============= */
 
     //------------Mouri----------------//
-
-    //-------------Deposit& Withdraw----------------//
-    // app.get("/deposit", async (req, res) => {
-    //   const query = { type: "deposit" };
-    //   const applicants = await depositWithdrawCollection.find(query).toArray();
-    //   res.send(applicants);
-    // });
-    // -blog& news
     app.get("/blogsNews", async (req, res) => {
       const query = {};
       const news = await blogsNewsCollection.find(query).toArray();
@@ -522,7 +491,6 @@ async function run() {
       const email = req.body.email;
       const filter = { email: email };
       const apply = await allAccountsCollection.deleteOne(filter);
-
       const filter1 = { email: email };
       const updateDoc = {
         $set: {
@@ -530,7 +498,6 @@ async function run() {
         },
       };
       const apply1 = await usersCollection.updateOne(filter, updateDoc);
-
       res.send(apply);
     });
 
@@ -569,7 +536,6 @@ async function run() {
       const query = { approve: true };
       const info = await allAccountsCollection.find(query).toArray();
       const user = await usersCollection.find({}).toArray();
-
       let result = [];
       info.map((singleInfo) => {
         user.map((singleUser) => {
@@ -655,7 +621,6 @@ async function run() {
     app.get("/getChatInfo/:email", async (req, res) => {
       const email = req.params.email;
       const arrayEmail = email.split(" ");
-
       const result = await chatInfoCollection
         .find({
           $or: [
@@ -676,7 +641,9 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let allChatInfo = await chatInfoCollection
+        .find({ senderEmail: { $ne: "admin@gmail.com" } })
+        .toArray();
       let emailMap = {};
       allChatInfo = allChatInfo.filter((obj) => {
         if (!emailMap[obj.senderEmail]) {
@@ -691,7 +658,6 @@ async function run() {
     //socket for chat
     io.on("connection", (socket) => {
       socket.on("disconnect", () => {});
-
       socket.on("send message", async (data) => {
         if (data.senderEmail != "admin@gmail.com") {
           const receiverInfo = await usersCollection.findOne({
@@ -709,7 +675,6 @@ async function run() {
         io.emit("messageTransfer", data);
         io.emit("messageNotificationTransfer", data);
       });
-
       socket.on("send verification", async (data) => {
         io.emit("verificationNotificationTransfer", data);
       });
@@ -718,14 +683,6 @@ async function run() {
     //--------Akash Back-End End-------------//
 
     //--------Niloy Back-End Start-------------//
-
-    // app.post("/pay-bills", async (req, res) => {
-    //   const query = req.body;
-    //   console.log(query);
-    //   const result = await payBillsCollection.insertOne(query);
-    //   res.send(result);
-    // });
-    // all donate api call in dashboard
     app.get("/pay-bills", async (req, res) => {
       const query = {};
       const result = await payBillsCollection.find(query).toArray();
@@ -734,7 +691,6 @@ async function run() {
     // Start All Pay bil Method
     app.post("/pay-bills", async (req, res) => {
       const payBills = req.body;
-      console.log(payBills);
       const { name, phnNumber, amount, billType, billSNumber } = payBills;
       const transactionId = new ObjectId().toString().substring(0, 6);
 
@@ -768,7 +724,6 @@ async function run() {
         ship_postcode: 1000,
         ship_country: "Bangladesh",
       };
-      console.log(data);
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
 
       sslcz.init(data).then((apiResponse) => {
@@ -789,11 +744,6 @@ async function run() {
     //  pay-bills success post method
     app.post("/pay-bills/success", async (req, res) => {
       const { transactionId } = req.query;
-
-      // if (transactionId) {
-      //   return res.redirect("http://localhost:3000/donate/fail");
-      // }
-
       const result = await payBillsCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -820,7 +770,6 @@ async function run() {
     app.get("/pay-bills/by-transaction-id/:id", async (req, res) => {
       const { id } = req.params;
       const result = await payBillsCollection.findOne({ transactionId: id });
-      console.log(id, result);
       res.send(result);
     });
 
