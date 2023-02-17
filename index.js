@@ -686,7 +686,7 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let allChatInfo = await chatInfoCollection.find({ senderEmail: { $ne: 'admin@gmail.com' } }).toArray();
       let emailMap = {};
       allChatInfo = allChatInfo.filter((obj) => {
         if (!emailMap[obj.senderEmail]) {
