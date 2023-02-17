@@ -344,7 +344,7 @@ async function run() {
     });
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { email };
+      const query = { email: email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
@@ -359,6 +359,7 @@ async function run() {
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
+
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
