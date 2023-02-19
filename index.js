@@ -18,6 +18,13 @@ const socketServer = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 app.use(useragent.express());
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS");
+  next();
+});
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.z9k78im.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -857,6 +864,9 @@ app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
 
+socketServer.prependListener("request", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+});
 socketServer.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
 });
