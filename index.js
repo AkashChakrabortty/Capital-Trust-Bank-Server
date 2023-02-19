@@ -157,7 +157,12 @@ async function run() {
     const blogsNewsCollection = client
       .db("capital-trust-bank")
       .collection("blogsNews");
+    const exchangesCollection = client
+      .db("capital-trust-bank")
+      .collection("exchange");
 
+
+      /* ------- Rakib Khan Code Start ------ */
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -188,6 +193,14 @@ async function run() {
       const result = await teamsCollection.findOne(query);
       res.send(result);
     });
+
+    app.post('/exchange', async (req, res) => {
+      const exchange = req.body;     
+      const result = await exchangesCollection.insertOne(exchange);
+      res.send(result)
+      console.log(result)
+    })
+    /* ------- Rakib Khan Code End ------ */
 
     /*==============Start Emon Backend Code  ============*/
 
