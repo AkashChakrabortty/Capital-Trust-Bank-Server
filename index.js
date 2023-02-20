@@ -9,10 +9,10 @@ const mg = require("nodemailer-mailgun-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const http = require("http");
-const { Server } = require("socket.io");
+// const { Server } = require("socket.io");
 const port = process.env.PORT || 5000;
 
-const socketServer = http.createServer(app);
+// const socketServer = http.createServer(app);
 
 //middleware
 app.use(cors());
@@ -26,18 +26,19 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-// SSL commerz   CODE
+// SSL commerz   CODEd
 const store_id = process.env.STORE_ID;
 const store_passwd = process.env.STORE_PASSWORD;
+
 const is_live = false; //true for live, false for sandbox
 
 //for cors policy
-const io = new Server(socketServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "DELETE", "PATCH", "PUT"],
-  },
-});
+// const io = new Server(socketServer, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST", "DELETE", "PATCH", "PUT"],
+//   },
+// });
 
 function sendNewAccountEmail(account) {
   const {
@@ -162,7 +163,7 @@ async function run() {
       .collection("exchange");
 
 
-      /* ------- Rakib Khan Code Start ------ */
+    /* ------- Rakib Khan Code Start ------ */
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -195,7 +196,7 @@ async function run() {
     });
 
     app.post('/exchange', async (req, res) => {
-      const exchange = req.body;     
+      const exchange = req.body;
       const result = await exchangesCollection.insertOne(exchange);
       res.send(result)
       console.log(result)
@@ -217,9 +218,9 @@ async function run() {
         currency: donate.currency,
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/donate/success?transactionId=${transactionId}`,
-        fail_url: `http://localhost:5000/donate/fail?transactionId=${transactionId}`,
-        cancel_url: "http://localhost:5000/donate/cancel",
-        ipn_url: "http://localhost:5000/donate/ipn",
+        fail_url: `${process.env.SERVER_URL}/donate/fail?transactionId=${transactionId}`,
+        cancel_url: `${process.env.SERVER_URL}/donate/cancel`,
+        ipn_url: `${process.env.SERVER_URL}/donate/ipn`,
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: "Electronic",
@@ -327,13 +328,13 @@ async function run() {
     });
     //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
-      const query = {approve:false};
+      const query = { approve: false };
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
     app.get("/bankAccounts/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { email:email };
+      const query = { email: email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
@@ -652,6 +653,24 @@ async function run() {
       res.send(result);
     });
 
+    app.post('/post-message', async (req, res) => {
+      const data = req.body;
+      if (data.senderEmail != "admin@gmail.com") {
+        const receiverInfo = await usersCollection.findOne({
+          email: "admin@gmail.com",
+        });
+        data.receiverEmail = "admin@gmail.com";
+        data.receiverImg = receiverInfo.image;
+        data.receiverName = receiverInfo.name;
+      }
+      //store chat into the database
+      const storeChatInfo = await chatInfoCollection.insertOne(data);
+      //store chat into the database
+      const storeChatNotificationInfo =
+        await chatNotificationCollection.insertOne(data);
+        res.send(storeChatInfo)
+    })
+
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
       let allChatInfo = await chatInfoCollection
@@ -669,29 +688,29 @@ async function run() {
     });
 
     //socket for chat
-    io.on("connection", (socket) => {
-      socket.on("disconnect", () => {});
-      socket.on("send message", async (data) => {
-        if (data.senderEmail != "admin@gmail.com") {
-          const receiverInfo = await usersCollection.findOne({
-            email: "admin@gmail.com",
-          });
-          data.receiverEmail = "admin@gmail.com";
-          data.receiverImg = receiverInfo.image;
-          data.receiverName = receiverInfo.name;
-        }
-        //store chat into the database
-        const storeChatInfo = await chatInfoCollection.insertOne(data);
-        //store chat into the database
-        const storeChatNotificationInfo =
-          await chatNotificationCollection.insertOne(data);
-        io.emit("messageTransfer", data);
-        io.emit("messageNotificationTransfer", data);
-      });
-      socket.on("send verification", async (data) => {
-        io.emit("verificationNotificationTransfer", data);
-      });
-    });
+    // io.on("connection", (socket) => {
+    //   socket.on("disconnect", () => { });
+    //   socket.on("send message", async (data) => {
+    //     if (data.senderEmail != "admin@gmail.com") {
+    //       const receiverInfo = await usersCollection.findOne({
+    //         email: "admin@gmail.com",
+    //       });
+    //       data.receiverEmail = "admin@gmail.com";
+    //       data.receiverImg = receiverInfo.image;
+    //       data.receiverName = receiverInfo.name;
+    //     }
+    //     //store chat into the database
+    //     const storeChatInfo = await chatInfoCollection.insertOne(data);
+    //     //store chat into the database
+    //     const storeChatNotificationInfo =
+    //       await chatNotificationCollection.insertOne(data);
+    //     io.emit("messageTransfer", data);
+    //     io.emit("messageNotificationTransfer", data);
+    //   });
+    //   socket.on("send verification", async (data) => {
+    //     io.emit("verificationNotificationTransfer", data);
+    //   });
+    // });
     //
     //--------Akash Back-End End-------------//
 
@@ -712,9 +731,9 @@ async function run() {
         currency: "BDT",
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
-        fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
-        cancel_url: "http://localhost:5000/pay-bills/cancel",
-        ipn_url: "http://localhost:5000/pay-bills/ipn",
+        fail_url: `${process.env.SERVER_URL}/pay-bills/fail?transactionId=${transactionId}`,
+        cancel_url: `${process.env.SERVER_URL}/pay-bills/cancel`,
+        ipn_url: `${process.env.SERVER_URL}/pay-bills/ipn`,
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: billType,
@@ -801,9 +820,16 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Capital Trust Bank server is running");
+  res.send("Capital Trust Bank server is running v6");
 });
+app.listen(port, () => {
+  console.log(`Capital Trust Bank Server is running on port ${port}`)
+})
 
-socketServer.listen(port, () => {
-  console.log(`Capital Trust Bank Server is running on port ${port}`);
-});
+// socketServer.prependListener("request", (req, res) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+// });
+
+// socketServer.listen(port, () => {
+//   console.log(`Capital Trust Bank Server is running on port ${port}`);
+// });
