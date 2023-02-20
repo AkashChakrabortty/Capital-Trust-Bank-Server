@@ -123,9 +123,15 @@ async function run() {
     const payBillsCollection = client
       .db("capital-trust-bank")
       .collection("payBills");
+    //  emergency Services data in slider
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
+    //  emergency Services data in slider
+    const ServiceReceiverCollection = client
+      .db("capital-trust-bank")
+      .collection("emgyServiceReceiver");
+
     const teamsCollection = client.db("capital-trust-bank").collection("teams");
     const loanServiceDataCollection = client
       .db("capital-trust-bank")
@@ -200,6 +206,14 @@ async function run() {
     /*Start Emon Backend Code  */
 
     /*==============Start Emon Backend Code  ============*/
+
+    // applier for credit card
+    app.post("/emgyServiceReceiver", async (req, res) => {
+      const serviceReceiver = req.body;
+      console.log(serviceReceiver);
+      const result = await ServiceReceiverCollection.insertOne(serviceReceiver);
+      res.send(result);
+    });
 
     // donate All method Start
     app.post("/donate", async (req, res) => {
@@ -282,7 +296,9 @@ async function run() {
     app.post("/donate/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("https://capital-trust-bank-ee791.web.app/donate/fail");
+        return res.redirect(
+          "https://capital-trust-bank-ee791.web.app/donate/fail"
+        );
       }
       const result = await donateCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
@@ -582,16 +598,12 @@ async function run() {
 
       let result = [];
       info.map((singleInfo) => {
-
-
         user.map((singleUser) => {
           if (singleInfo.email === singleUser.email) {
             singleInfo["img"] = singleUser.image;
             result.push(singleInfo);
           }
         });
-
-
       });
       res.send(result);
     });
@@ -803,7 +815,6 @@ async function run() {
     app.post("/pay-bills/success", async (req, res) => {
       const { transactionId } = req.query;
 
-
       const result = await payBillsCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -819,7 +830,9 @@ async function run() {
     app.post("/pay-bills/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("https://capital-trust-bank-ee791.web.app/pay-bills/fail");
+        return res.redirect(
+          "https://capital-trust-bank-ee791.web.app/pay-bills/fail"
+        );
       }
       const result = await payBillsCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
@@ -859,5 +872,3 @@ app.get("/", (req, res) => {
 socketServer.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
 });
-
-
