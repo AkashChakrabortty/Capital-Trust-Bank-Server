@@ -217,7 +217,8 @@ async function run() {
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/donate/success?transactionId=${transactionId}`,
         fail_url: `https://capital-trust-bank-server.vercel.app/donate/fail?transactionId=${transactionId}`,
-        cancel_url: "https://capital-trust-bank-server.vercel.app/donate/cancel",
+        cancel_url:
+          "https://capital-trust-bank-server.vercel.app/donate/cancel",
         ipn_url: "https://capital-trust-bank-server.vercel.app/donate/ipn",
         shipping_method: "Courier",
         product_name: "Computer.",
@@ -282,7 +283,9 @@ async function run() {
     app.post("/donate/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("https://capital-trust-bank-ee791.web.app/donate/fail");
+        return res.redirect(
+          "https://capital-trust-bank-ee791.web.app/donate/fail"
+        );
       }
       const result = await donateCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
@@ -754,7 +757,8 @@ async function run() {
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
         fail_url: `https://capital-trust-bank-server.vercel.app/pay-bills/fail?transactionId=${transactionId}`,
-        cancel_url: "https://capital-trust-bank-server.vercel.app/pay-bills/cancel",
+        cancel_url:
+          "https://capital-trust-bank-server.vercel.app/pay-bills/cancel",
         ipn_url: "https://capital-trust-bank-server.vercel.app/pay-bills/ipn",
         shipping_method: "Courier",
         product_name: "Computer.",
@@ -800,7 +804,6 @@ async function run() {
     app.post("/pay-bills/success", async (req, res) => {
       const { transactionId } = req.query;
 
-
       const result = await payBillsCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -816,7 +819,9 @@ async function run() {
     app.post("/pay-bills/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("https://capital-trust-bank-ee791.web.app/pay-bills/fail");
+        return res.redirect(
+          "https://capital-trust-bank-ee791.web.app/pay-bills/fail"
+        );
       }
       const result = await payBillsCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
