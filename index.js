@@ -216,9 +216,9 @@ async function run() {
         currency: donate.currency,
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/donate/success?transactionId=${transactionId}`,
-        fail_url: `https://capital-trust-bank-server.vercel.app/donate/fail?transactionId=${transactionId}`,
-        cancel_url: "https://capital-trust-bank-server.vercel.app/donate/cancel",
-        ipn_url: "https://capital-trust-bank-server.vercel.app/donate/ipn",
+        fail_url: `http://localhost:5000/donate/fail?transactionId=${transactionId}`,
+        cancel_url: "http://localhost:5000/donate/cancel",
+        ipn_url: "http://localhost:5000/donate/ipn",
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: "Electronic",
@@ -582,12 +582,16 @@ async function run() {
 
       let result = [];
       info.map((singleInfo) => {
+
+
         user.map((singleUser) => {
           if (singleInfo.email === singleUser.email) {
             singleInfo["img"] = singleUser.image;
             result.push(singleInfo);
           }
         });
+
+
       });
       res.send(result);
     });
@@ -665,7 +669,6 @@ async function run() {
     app.get("/getChatInfo/:email", async (req, res) => {
       const email = req.params.email;
       const arrayEmail = email.split(" ");
-
       const result = await chatInfoCollection
         .find({
           $or: [
@@ -753,9 +756,9 @@ async function run() {
         currency: "BDT",
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
-        fail_url: `https://capital-trust-bank-server.vercel.app/pay-bills/fail?transactionId=${transactionId}`,
-        cancel_url: "https://capital-trust-bank-server.vercel.app/pay-bills/cancel",
-        ipn_url: "https://capital-trust-bank-server.vercel.app/pay-bills/ipn",
+        fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
+        cancel_url: "http://localhost:5000/pay-bills/cancel",
+        ipn_url: "http://localhost:5000/pay-bills/ipn",
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: billType,
@@ -849,6 +852,12 @@ app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running");
 });
 
+// socketServer.prependListener("request", (req, res) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+// });
+
 socketServer.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
 });
+
+
