@@ -207,10 +207,6 @@ async function run() {
       res.send(result);
     });
 
-    // ------Start of Rakib Khan Backend -------
-
-    /*Start Emon Backend Code  */
-
     app.post('/exchange', async (req, res) => {
       const exchange = req.body;
       const result = await exchangesCollection.insertOne(exchange);
@@ -746,31 +742,29 @@ async function run() {
     });
 
     //socket for chat
-    io.on("connection", (socket) => {
-      socket.on("disconnect", () => {});
-
-      socket.on("send message", async (data) => {
-        if (data.senderEmail != "admin@gmail.com") {
-          const receiverInfo = await usersCollection.findOne({
-            email: "admin@gmail.com",
-          });
-          data.receiverEmail = "admin@gmail.com";
-          data.receiverImg = receiverInfo.image;
-          data.receiverName = receiverInfo.name;
-        }
-        //store chat into the database
-        const storeChatInfo = await chatInfoCollection.insertOne(data);
-        //store chat into the database
-        const storeChatNotificationInfo =
-          await chatNotificationCollection.insertOne(data);
-        io.emit("messageTransfer", data);
-        io.emit("messageNotificationTransfer", data);
-      });
-
-      socket.on("send verification", async (data) => {
-        io.emit("verificationNotificationTransfer", data);
-      });
-    });
+    // io.on("connection", (socket) => {
+    //   socket.on("disconnect", () => { });
+    //   socket.on("send message", async (data) => {
+    //     if (data.senderEmail != "admin@gmail.com") {
+    //       const receiverInfo = await usersCollection.findOne({
+    //         email: "admin@gmail.com",
+    //       });
+    //       data.receiverEmail = "admin@gmail.com";
+    //       data.receiverImg = receiverInfo.image;
+    //       data.receiverName = receiverInfo.name;
+    //     }
+    //     //store chat into the database
+    //     const storeChatInfo = await chatInfoCollection.insertOne(data);
+    //     //store chat into the database
+    //     const storeChatNotificationInfo =
+    //       await chatNotificationCollection.insertOne(data);
+    //     io.emit("messageTransfer", data);
+    //     io.emit("messageNotificationTransfer", data);
+    //   });
+    //   socket.on("send verification", async (data) => {
+    //     io.emit("verificationNotificationTransfer", data);
+    //   });
+    // });
     //
     //--------Akash Back-End End-------------//
 
@@ -885,7 +879,7 @@ async function run() {
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
     });
-    // END All Pay bil Method
+    // END All Pay bil Method   
 
     //--------Niloy Back-End End-------------//
   } finally {
@@ -904,6 +898,6 @@ app.listen(port, () => {
 //   res.setHeader("Access-Control-Allow-Origin", "*");
 // });
 
-socketServer.listen(port, () => {
-  console.log(`Capital Trust Bank Server is running on port ${port}`);
-});
+// socketServer.listen(port, () => {
+//   console.log(`Capital Trust Bank Server is running on port ${port}`);
+// });
