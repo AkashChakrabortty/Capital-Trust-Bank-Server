@@ -177,6 +177,9 @@ async function run() {
     const exchangesCollection = client
       .db("capital-trust-bank")
       .collection("exchange");
+    const accountCollection = client
+      .db("capital-trust-bank")
+      .collection("account");
 
     /* ------- Rakib Khan Code Start ------ */
     // save users to database
@@ -217,7 +220,6 @@ async function run() {
       console.log(result);
     });
     /* ------- Rakib Khan Code End ------ */
-
     /*==============Start Emon Backend Code  ============*/
     //slider data
     app.get("/emergencyServices", async (req, res) => {
@@ -410,7 +412,7 @@ async function run() {
     });
     //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
-      const query = {};
+      const query = { approve: false };
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
@@ -495,6 +497,29 @@ async function run() {
     app.post("/depositWithdraw", async (req, res) => {
       const applicant = req.body;
       const result = await depositWithdrawCollection.insertOne(applicant);
+      //insert deposit amount
+      const filter = { email: applicant.email, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(filter);
+      let updateDoc;
+      if (applicant.type === "deposit") {
+        updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) +
+              parseFloat(applicant.deposit),
+          },
+        };
+      } else {
+        updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) -
+              parseFloat(applicant.withdraw),
+          },
+        };
+      }
+
+      const deposit = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
     app.get("/loans", async (req, res) => {
@@ -778,7 +803,9 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let allChatInfo = await chatInfoCollection
+        .find({ senderEmail: { $ne: "admin@gmail.com" } })
+        .toArray();
       let emailMap = {};
       allChatInfo = allChatInfo.filter((obj) => {
         if (!emailMap[obj.senderEmail]) {
@@ -788,6 +815,46 @@ async function run() {
         return false;
       });
       res.send(allChatInfo);
+    });
+
+    app.post("/sentMoney", async (req, res) => {
+      const info = req.body;
+      const filterReceiver = { accountId: info.id, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(
+        filterReceiver
+      );
+
+      if (previousAmount) {
+        const filter = { accountId: info.id, approve: true };
+        const updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) +
+              parseFloat(info.amount),
+          },
+        };
+        const increaseReceiverMoney = await allAccountsCollection.updateOne(
+          filter,
+          updateDoc
+        );
+
+        const filter1 = { email: info.senderEmail };
+        const previousAmount1 = await allAccountsCollection.findOne(filter1);
+        const updateDoc1 = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount1.availableAmount) -
+              parseFloat(info.amount),
+          },
+        };
+        const decreaseReceiverMoney = await allAccountsCollection.updateOne(
+          filter1,
+          updateDoc1
+        );
+        res.send({ isSuccessful: true });
+      } else {
+        res.send({ isSuccessful: false });
+      }
     });
 
     //socket for chat
