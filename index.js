@@ -616,6 +616,18 @@ async function run() {
       };
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(apply);
+      //1% rate months
+     setInterval(async()=>{
+      const filter = {email: email,approve:true}
+      const user =  await allAccountsCollection.findOne(filter);
+      const rateValue = parseFloat(user.availableAmount) * (1/100);
+      const updateDoc = {
+        $set: {
+          availableAmount:  (parseFloat(user.availableAmount) - rateValue).toFixed(2)
+        }
+       }
+       const result =  await allAccountsCollection.updateOne(filter,updateDoc);
+    },2629800000)
     });
 
     //accept card req
@@ -856,6 +868,8 @@ async function run() {
         res.send({ isSuccessful: false });
       }
     });
+
+    
 
     //socket for chat
     // io.on("connection", (socket) => {
