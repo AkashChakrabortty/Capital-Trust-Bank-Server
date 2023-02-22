@@ -704,6 +704,14 @@ async function run() {
       res.send(result);
     });
 
+     //Delete loan req
+     app.delete("/deleteLoanReq/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await applicantsCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     //store customers exchange info
     app.post("/storeExchangeInfo", async (req, res) => {
       const info = req.body;
