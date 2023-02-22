@@ -9,10 +9,10 @@ const mg = require("nodemailer-mailgun-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const http = require("http");
-const { Server } = require("socket.io");
+// const { Server } = require("socket.io");
 const port = process.env.PORT || 5000;
 
-const socketServer = http.createServer(app);
+// const socketServer = http.createServer(app);
 
 //middleware
 app.use(cors());
@@ -26,18 +26,19 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-// SSL commerz   CODE
+// SSL commerz   CODEd
 const store_id = process.env.STORE_ID;
 const store_passwd = process.env.STORE_PASSWORD;
+
 const is_live = false; //true for live, false for sandbox
 
 //for cors policy
-const io = new Server(socketServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "DELETE", "PATCH", "PUT"],
-  },
-});
+// const io = new Server(socketServer, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST", "DELETE", "PATCH", "PUT"],
+//   },
+// });
 
 function sendNewAccountEmail(account) {
   const {
@@ -123,9 +124,19 @@ async function run() {
     const payBillsCollection = client
       .db("capital-trust-bank")
       .collection("payBills");
+    //  emergency Services data in slider
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
+    //  give Cheque Book Services data in slider
+    const giveChequeBookCollection = client
+      .db("capital-trust-bank")
+      .collection("giveChequeBook");
+    //  emergency Services data in slider
+    const ServiceReceiverCollection = client
+      .db("capital-trust-bank")
+      .collection("emgyServiceReceiver");
+
     const teamsCollection = client.db("capital-trust-bank").collection("teams");
     const loanServiceDataCollection = client
       .db("capital-trust-bank")
@@ -154,10 +165,20 @@ async function run() {
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
+    const chatNotificationCollection = client
+      .db("capital-trust-bank")
+      .collection("chatNotification");
+    const verifyNotificationCollection = client
+      .db("capital-trust-bank")
+      .collection("verifyNotification");
     const blogsNewsCollection = client
       .db("capital-trust-bank")
       .collection("blogsNews");
+    const exchangesCollection = client
+      .db("capital-trust-bank")
+      .collection("exchange");
 
+    /* ------- Rakib Khan Code Start ------ */
     // save users to database
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -189,11 +210,72 @@ async function run() {
       res.send(result);
     });
 
-    // ------Start of Rakib Khan Backend -------
-
-    /*Start Emon Backend Code  */
+    app.post("/exchange", async (req, res) => {
+      const exchange = req.body;
+      const result = await exchangesCollection.insertOne(exchange);
+      res.send(result);
+      console.log(result);
+    });
+    /* ------- Rakib Khan Code End ------ */
 
     /*==============Start Emon Backend Code  ============*/
+
+
+    //slider data
+    app.get("/emergencyServices", async (req, res) => {
+      const query = {};
+      const result = await emergencyServiceCollection.find(query).toArray();
+      res.send(result);
+    });
+    // applier for credit card
+    app.post("/emgyServiceReceiver", async (req, res) => {
+      const serviceReceiver = req.body;
+      console.log(serviceReceiver);
+      const result = await ServiceReceiverCollection.insertOne(serviceReceiver);
+      res.send(result);
+    });
+    // applier for Cheque book
+    app.get("/emgyServiceReceiver", async (req, res) => {
+      const query = {};
+      const result = await ServiceReceiverCollection.find(query).toArray();
+      res.send(result);
+    });
+    //accept for Cheque book
+    app.post("/acceptEmgyServiceReq", async (req, res) => {
+      const id = req.body.accountId;
+      console.log(id);
+      const info = req.body;
+      const filter = { accountId: id };
+      const chequeId = new ObjectId().toString().substring(0, 6);
+      const routingNo = new ObjectId().toString().substring(0, 10);
+      const randomId = new ObjectId().toString().substring(0, 16);
+      const giveCard = await giveChequeBookCollection.insertOne({
+        ...info,
+        chequeId,
+        routingNo,
+        randomId,
+      });
+      console.log(giveCard);
+      const result = await ServiceReceiverCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //Delete Cheque book
+    app.delete("/deleteEmgyServiceReq", async (req, res) => {
+      const id = req.body.id;
+      console.log(id);
+      const filter = { accountId: id };
+      const result = await ServiceReceiverCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //get single Cheque book
+    app.get("/getEmgyServiceReq/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await giveChequeBookCollection.findOne(query);
+      res.send(result);
+    });
 
     // donate All method Start
     app.post("/donate", async (req, res) => {
@@ -210,9 +292,9 @@ async function run() {
         currency: donate.currency,
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/donate/success?transactionId=${transactionId}`,
-        fail_url: `http://localhost:5000/donate/fail?transactionId=${transactionId}`,
-        cancel_url: "http://localhost:5000/donate/cancel",
-        ipn_url: "http://localhost:5000/donate/ipn",
+        fail_url: `${process.env.SERVER_URL}/donate/fail?transactionId=${transactionId}`,
+        cancel_url: `${process.env.SERVER_URL}/donate/cancel`,
+        ipn_url: `${process.env.SERVER_URL}/donate/ipn`,
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: "Electronic",
@@ -261,10 +343,6 @@ async function run() {
     app.post("/donate/success", async (req, res) => {
       const { transactionId } = req.query;
 
-      // if (transactionId) {
-      //   return res.redirect("http://localhost:3000/donate/fail");
-      // }
-
       const result = await donateCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -280,11 +358,13 @@ async function run() {
     app.post("/donate/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("http://localhost:3000/donate/fail");
+        return res.redirect(
+          "https://capital-trust-bank-ee791.web.app/donate/fail"
+        );
       }
       const result = await donateCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
-        res.redirect("http://localhost:3000/donate/fail");
+        res.redirect("https://capital-trust-bank-ee791.web.app/donate/fail");
       }
     });
     // show api when users success his donate
@@ -325,20 +405,35 @@ async function run() {
         },
       };
       const apply = await usersCollection.updateOne(filter, updateDoc, options);
+      const verifyNotification = await verifyNotificationCollection.insertOne(
+        account
+      );
       res.send(result);
     });
-    // read data for emergency service req slider
+    //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
       const query = {};
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
     app.get("/bankAccounts/:email", async (req, res) => {
-      const email = req.query;
-      const query = { email };
+      const email = req.params.email;
+      const query = { email: email };
       const result = await allAccountsCollection.findOne(query);
       res.send(result);
     });
+    app.get("/approved", async (req, res) => {
+      const query = { approve: true };
+      const result = await allAccountsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/approved/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await allAccountsCollection.findOne(query);
+      res.send(result);
+    });
+
     app.get("/cardReq", async (req, res) => {
       const query = {};
       const result = await applierCollection.find(query).toArray();
@@ -385,14 +480,17 @@ async function run() {
     });
 
     app.get("/depositWithdraw", async (req, res) => {
-      const query = { _id: ObjectId() };
+      const query = req.body;
       const applicant = await depositWithdrawCollection.find(query).toArray();
       res.send(applicant);
     });
     app.get("/depositWithdraw/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await depositWithdrawCollection.find(query).toArray();
+      const result = await depositWithdrawCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
     });
 
@@ -486,6 +584,7 @@ async function run() {
     //accept verification req
     app.post("/verifyCustomer", async (req, res) => {
       const email = req.body.email;
+      const info = req.body;
       const filter = { email: email };
       const updateDoc = {
         $set: {
@@ -519,7 +618,6 @@ async function run() {
         },
       };
       const apply1 = await usersCollection.updateOne(filter, updateDoc);
-
       res.send(apply);
     });
 
@@ -531,11 +629,25 @@ async function run() {
       res.send(result);
     });
 
+    //Delete verification req notification
+    app.delete("/verificationNotificationDelete", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const result = await verifyNotificationCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     //get single customer info
     app.get("/customer/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const info = await usersCollection.findOne(query);
+      res.send(info);
+    });
+
+    //get all verification info
+    app.get("/getVerifyNotificationInfo", async (req, res) => {
+      const info = await verifyNotificationCollection.find({}).toArray();
       res.send(info);
     });
 
@@ -596,6 +708,20 @@ async function run() {
       res.send(result);
     });
 
+    //Delete single customer device info
+    app.delete("/notificationDelete", async (req, res) => {
+      const senderEmail = req.body.senderEmail;
+      const receiverEmail = req.body.receiverEmail;
+      const query = {
+        $or: [
+          { senderEmail: senderEmail, receiverEmail: receiverEmail },
+          { senderEmail: receiverEmail, receiverEmail: senderEmail },
+        ],
+      };
+      const result = await chatNotificationCollection.deleteMany(query);
+      res.send(result);
+    });
+
     //get single customer device info
     app.get("/getDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
@@ -604,11 +730,18 @@ async function run() {
       res.send(result);
     });
 
+    //get single customer device info
+    app.get("/getChatNotificationInfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { receiverEmail: email };
+      const result = await chatNotificationCollection.find(query).toArray();
+      res.send(result);
+    });
+
     //get single chat info
     app.get("/getChatInfo/:email", async (req, res) => {
       const email = req.params.email;
       const arrayEmail = email.split(" ");
-
       const result = await chatInfoCollection
         .find({
           $or: [
@@ -627,6 +760,24 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/post-message", async (req, res) => {
+      const data = req.body;
+      if (data.senderEmail != "admin@gmail.com") {
+        const receiverInfo = await usersCollection.findOne({
+          email: "admin@gmail.com",
+        });
+        data.receiverEmail = "admin@gmail.com";
+        data.receiverImg = receiverInfo.image;
+        data.receiverName = receiverInfo.name;
+      }
+      //store chat into the database
+      const storeChatInfo = await chatInfoCollection.insertOne(data);
+      //store chat into the database
+      const storeChatNotificationInfo =
+        await chatNotificationCollection.insertOne(data);
+      res.send(storeChatInfo);
+    });
+
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
       let allChatInfo = await chatInfoCollection.find({}).toArray();
@@ -642,23 +793,29 @@ async function run() {
     });
 
     //socket for chat
-    io.on("connection", (socket) => {
-      socket.on("disconnect", () => {});
-
-      socket.on("send message", async (data) => {
-        if (data.senderEmail != "admin@gmail.com") {
-          const receiverInfo = await usersCollection.findOne({
-            email: "admin@gmail.com",
-          });
-          data.receiverEmail = "admin@gmail.com";
-          data.receiverImg = receiverInfo.image;
-          data.receiverName = receiverInfo.name;
-        }
-        //store chat into the database
-        const storeChatInfo = chatInfoCollection.insertOne(data);
-        io.emit("messageTransfer", data);
-      });
-    });
+    // io.on("connection", (socket) => {
+    //   socket.on("disconnect", () => { });
+    //   socket.on("send message", async (data) => {
+    //     if (data.senderEmail != "admin@gmail.com") {
+    //       const receiverInfo = await usersCollection.findOne({
+    //         email: "admin@gmail.com",
+    //       });
+    //       data.receiverEmail = "admin@gmail.com";
+    //       data.receiverImg = receiverInfo.image;
+    //       data.receiverName = receiverInfo.name;
+    //     }
+    //     //store chat into the database
+    //     const storeChatInfo = await chatInfoCollection.insertOne(data);
+    //     //store chat into the database
+    //     const storeChatNotificationInfo =
+    //       await chatNotificationCollection.insertOne(data);
+    //     io.emit("messageTransfer", data);
+    //     io.emit("messageNotificationTransfer", data);
+    //   });
+    //   socket.on("send verification", async (data) => {
+    //     io.emit("verificationNotificationTransfer", data);
+    //   });
+    // });
     //
     //--------Akash Back-End End-------------//
 
@@ -688,9 +845,9 @@ async function run() {
         currency: "BDT",
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_URL}/pay-bills/success?transactionId=${transactionId}`,
-        fail_url: `http://localhost:5000/pay-bills/fail?transactionId=${transactionId}`,
-        cancel_url: "http://localhost:5000/pay-bills/cancel",
-        ipn_url: "http://localhost:5000/pay-bills/ipn",
+        fail_url: `${process.env.SERVER_URL}/pay-bills/fail?transactionId=${transactionId}`,
+        cancel_url: `${process.env.SERVER_URL}/pay-bills/cancel`,
+        ipn_url: `${process.env.SERVER_URL}/pay-bills/ipn`,
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: billType,
@@ -735,10 +892,6 @@ async function run() {
     app.post("/pay-bills/success", async (req, res) => {
       const { transactionId } = req.query;
 
-      // if (transactionId) {
-      //   return res.redirect("http://localhost:3000/donate/fail");
-      // }
-
       const result = await payBillsCollection.updateOne(
         { transactionId },
         { $set: { paid: "true", paidAt: new Date() } }
@@ -754,11 +907,13 @@ async function run() {
     app.post("/pay-bills/fail", async (req, res) => {
       const { transactionId } = req.query;
       if (transactionId) {
-        return res.redirect("http://localhost:3000/pay-bills/fail");
+        return res.redirect(
+          "https://capital-trust-bank-ee791.web.app/pay-bills/fail"
+        );
       }
       const result = await payBillsCollection.deleteOne({ transactionId });
       if (result.deletedCount) {
-        res.redirect("http://localhost:3000/pay-bills/fail");
+        res.redirect("https://capital-trust-bank-ee791.web.app/pay-bills/fail");
       }
     });
     // show api when users success his pay-bills
@@ -784,12 +939,16 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Capital Trust Bank server is running");
+  res.send("Capital Trust Bank server is running v6");
 });
-// app.listen(port, (req, res) => {
-//   console.log(`Capital Trust Bank server is running on port ${port}`);
-// });
-
-socketServer.listen(port, () => {
+app.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
 });
+
+// socketServer.prependListener("request", (req, res) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+// });
+
+// socketServer.listen(port, () => {
+//   console.log(`Capital Trust Bank Server is running on port ${port}`);
+// });
