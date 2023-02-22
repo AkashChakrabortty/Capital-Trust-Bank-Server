@@ -219,10 +219,12 @@ async function run() {
     /* ------- Rakib Khan Code End ------ */
 
     /*==============Start Emon Backend Code  ============*/
-    // const giveChequeBookCollection = client
-    //   .db("capital-trust-bank")
-    //   .collection("giveChequeBook");
-
+    //slider data
+    app.get("/emergencyServices", async (req, res) => {
+      const query = {};
+      const result = await emergencyServiceCollection.find(query).toArray();
+      res.send(result);
+    });
     // applier for credit card
     app.post("/emgyServiceReceiver", async (req, res) => {
       const serviceReceiver = req.body;
@@ -251,7 +253,7 @@ async function run() {
         routingNo,
         randomId,
       });
-      console.log(giveCard)
+      console.log(giveCard);
       const result = await ServiceReceiverCollection.deleteOne(filter);
       res.send(result);
     });
@@ -935,7 +937,7 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Capital Trust Bank server is running v6");
+  res.send("Capital Trust Bank server is running v7");
 });
 app.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
