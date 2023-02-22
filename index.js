@@ -128,6 +128,10 @@ async function run() {
     const emergencyServiceCollection = client
       .db("capital-trust-bank")
       .collection("emergencyServices");
+    //  give Cheque Book Services data in slider
+    const giveChequeBookCollection = client
+      .db("capital-trust-bank")
+      .collection("giveChequeBook");
     //  emergency Services data in slider
     const ServiceReceiverCollection = client
       .db("capital-trust-bank")
@@ -174,7 +178,6 @@ async function run() {
       .db("capital-trust-bank")
       .collection("exchange");
 
-
     /* ------- Rakib Khan Code Start ------ */
     // save users to database
     app.put("/user/:email", async (req, res) => {
@@ -207,21 +210,66 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/exchange', async (req, res) => {
+    app.post("/exchange", async (req, res) => {
       const exchange = req.body;
       const result = await exchangesCollection.insertOne(exchange);
-      res.send(result)
-      console.log(result)
-    })
+      res.send(result);
+      console.log(result);
+    });
     /* ------- Rakib Khan Code End ------ */
 
     /*==============Start Emon Backend Code  ============*/
+    // const giveChequeBookCollection = client
+    //   .db("capital-trust-bank")
+    //   .collection("giveChequeBook");
 
     // applier for credit card
     app.post("/emgyServiceReceiver", async (req, res) => {
       const serviceReceiver = req.body;
       console.log(serviceReceiver);
       const result = await ServiceReceiverCollection.insertOne(serviceReceiver);
+      res.send(result);
+    });
+    // applier for Cheque book
+    app.get("/emgyServiceReceiver", async (req, res) => {
+      const query = {};
+      const result = await ServiceReceiverCollection.find(query).toArray();
+      res.send(result);
+    });
+    //accept for Cheque book
+    app.post("/acceptEmgyServiceReq", async (req, res) => {
+      const id = req.body.accountId;
+      console.log(id);
+      const info = req.body;
+      const filter = { accountId: id };
+      const chequeId = new ObjectId().toString().substring(0, 6);
+      const routingNo = new ObjectId().toString().substring(0, 10);
+      const randomId = new ObjectId().toString().substring(0, 16);
+      const giveCard = await giveChequeBookCollection.insertOne({
+        ...info,
+        chequeId,
+        routingNo,
+        randomId,
+      });
+      console.log(giveCard)
+      const result = await ServiceReceiverCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //Delete Cheque book
+    app.delete("/deleteEmgyServiceReq", async (req, res) => {
+      const id = req.body.id;
+      console.log(id);
+      const filter = { accountId: id };
+      const result = await ServiceReceiverCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //get single Cheque book
+    app.get("/getEmgyServiceReq/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await giveChequeBookCollection.findOne(query);
       res.send(result);
     });
 
@@ -566,7 +614,6 @@ async function run() {
         },
       };
       const apply1 = await usersCollection.updateOne(filter, updateDoc);
-
       res.send(apply);
     });
 
@@ -709,7 +756,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/post-message', async (req, res) => {
+    app.post("/post-message", async (req, res) => {
       const data = req.body;
       if (data.senderEmail != "admin@gmail.com") {
         const receiverInfo = await usersCollection.findOne({
@@ -724,8 +771,8 @@ async function run() {
       //store chat into the database
       const storeChatNotificationInfo =
         await chatNotificationCollection.insertOne(data);
-        res.send(storeChatInfo)
-    })
+      res.send(storeChatInfo);
+    });
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
@@ -879,7 +926,7 @@ async function run() {
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
     });
-    // END All Pay bil Method   
+    // END All Pay bil Method
 
     //--------Niloy Back-End End-------------//
   } finally {
@@ -891,8 +938,8 @@ app.get("/", (req, res) => {
   res.send("Capital Trust Bank server is running v6");
 });
 app.listen(port, () => {
-  console.log(`Capital Trust Bank Server is running on port ${port}`)
-})
+  console.log(`Capital Trust Bank Server is running on port ${port}`);
+});
 
 // socketServer.prependListener("request", (req, res) => {
 //   res.setHeader("Access-Control-Allow-Origin", "*");
