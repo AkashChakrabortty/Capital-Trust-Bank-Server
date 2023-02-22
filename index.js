@@ -217,14 +217,13 @@ async function run() {
       console.log(result);
     });
     /* ------- Rakib Khan Code End ------ */
-
     /*==============Start Emon Backend Code  ============*/
     //slider data
     app.get("/emergencyServices", async (req, res) => {
       const query = {};
       const result = await emergencyServiceCollection.find(query).toArray();
       res.send(result);
-    });
+    });   
     // applier for credit card
     app.post("/emgyServiceReceiver", async (req, res) => {
       const serviceReceiver = req.body;
