@@ -219,8 +219,6 @@ async function run() {
     /* ------- Rakib Khan Code End ------ */
 
     /*==============Start Emon Backend Code  ============*/
-
-
     //slider data
     app.get("/emergencyServices", async (req, res) => {
       const query = {};
