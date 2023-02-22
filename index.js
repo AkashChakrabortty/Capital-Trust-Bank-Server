@@ -219,10 +219,14 @@ async function run() {
     /* ------- Rakib Khan Code End ------ */
 
     /*==============Start Emon Backend Code  ============*/
-    // const giveChequeBookCollection = client
-    //   .db("capital-trust-bank")
-    //   .collection("giveChequeBook");
 
+
+    //slider data
+    app.get("/emergencyServices", async (req, res) => {
+      const query = {};
+      const result = await emergencyServiceCollection.find(query).toArray();
+      res.send(result);
+    });
     // applier for credit card
     app.post("/emgyServiceReceiver", async (req, res) => {
       const serviceReceiver = req.body;
@@ -251,7 +255,7 @@ async function run() {
         routingNo,
         randomId,
       });
-      console.log(giveCard)
+      console.log(giveCard);
       const result = await ServiceReceiverCollection.deleteOne(filter);
       res.send(result);
     });
