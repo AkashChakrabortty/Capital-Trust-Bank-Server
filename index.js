@@ -376,7 +376,16 @@ async function run() {
 
     // all donate api call in dashboard
     app.get("/donate", async (req, res) => {
-      const query = {};
+      const search = req.query.search;
+      console.log(search);
+      let query = {};
+      if (search.length) {
+        query = {
+          $text: {
+            $search: search,
+          },
+        };
+      }
       const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
@@ -679,7 +688,6 @@ async function run() {
       const query = { approve: true };
       const info = await allAccountsCollection.find(query).toArray();
       const user = await usersCollection.find({}).toArray();
-
       let result = [];
       info.map((singleInfo) => {
         user.map((singleUser) => {
@@ -886,18 +894,6 @@ async function run() {
 
     //--------Niloy Back-End Start-------------//
 
-    // app.post("/pay-bills", async (req, res) => {
-    //   const query = req.body;
-    //   console.log(query);
-    //   const result = await payBillsCollection.insertOne(query);
-    //   res.send(result);
-    // });
-    // all donate api call in dashboard
-    app.get("/pay-bills", async (req, res) => {
-      const query = {};
-      const result = await payBillsCollection.find(query).toArray();
-      res.send(result);
-    });
     // Start All Pay bil Method
     app.post("/pay-bills", async (req, res) => {
       const payBills = req.body;
@@ -990,7 +986,26 @@ async function run() {
     });
 
     // all pay  api call in dashboard
+    // app.get("/pay-bills", async (req, res) => {
+    //   // const query = {};
+    //   const search = req.query.search;
+    //   console.log(search);
+    //   let query = {};
+    //   if (search.length) {
+    //     query = {
+    //       $text: {
+    //         $search: search,
+    //       },
+    //     };
+    //   }
+
+    //   const result = await payBillsCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // all pay  api call in dashboard
     app.get("/pay-bills", async (req, res) => {
+      // const search = req.query.search;
+      // console.log(search);
       const query = {};
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
