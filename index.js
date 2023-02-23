@@ -165,6 +165,9 @@ async function run() {
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
+    const giveLoanCollection = client
+      .db("capital-trust-bank")
+      .collection("giveLoan");
     const chatNotificationCollection = client
       .db("capital-trust-bank")
       .collection("chatNotification");
@@ -376,7 +379,16 @@ async function run() {
 
     // all donate api call in dashboard
     app.get("/donate", async (req, res) => {
-      const query = {};
+      const search = req.query.search;
+      console.log(search);
+      let query = {};
+      if (search.length) {
+        query = {
+          $text: {
+            $search: search,
+          },
+        };
+      }
       const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
@@ -616,6 +628,18 @@ async function run() {
       };
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(apply);
+      //1% rate months
+     setInterval(async()=>{
+      const filter = {email: email,approve:true}
+      const user =  await allAccountsCollection.findOne(filter);
+      const rateValue = parseFloat(user.availableAmount) * (1/100);
+      const updateDoc = {
+        $set: {
+          availableAmount:  (parseFloat(user.availableAmount) - rateValue).toFixed(2)
+        }
+       }
+       const result =  await allAccountsCollection.updateOne(filter,updateDoc);
+    },2629800000)
     });
 
     //accept card req
@@ -679,7 +703,6 @@ async function run() {
       const query = { approve: true };
       const info = await allAccountsCollection.find(query).toArray();
       const user = await usersCollection.find({}).toArray();
-
       let result = [];
       info.map((singleInfo) => {
         user.map((singleUser) => {
@@ -689,6 +712,14 @@ async function run() {
           }
         });
       });
+      res.send(result);
+    });
+
+     //Delete loan req
+     app.delete("/deleteLoanReq/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await applicantsCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -723,6 +754,27 @@ async function run() {
       }
     });
 
+     //accept loan request
+     app.post("/acceptLoanReq", async (req, res) => {
+      const info = req.body;
+      const loanAmount= parseFloat(info.package.split('-')[0].split('$')[1]);
+      const year = parseFloat(info.package.split('-')[1].split(' ')[0]);
+      // const totalLoanAmount = parseFloat(loanAmount*year*0.1)
+      const filter = {email:info.email,approve:true};
+      const previousAmount = await allAccountsCollection.findOne(filter);
+      const updateDoc = {
+        $set: {
+          availableAmount: parseFloat(previousAmount.availableAmount) + parseFloat(loanAmount)
+        }
+
+      } 
+      
+      const increaseLoanApplierMoney = await allAccountsCollection.updateOne(filter,updateDoc);
+      const deleteLoanReq = await applicantsCollection.deleteOne({email:info.email});
+      const insertApproveLoan = await giveLoanCollection.insertOne(info)
+      res.send(insertApproveLoan)
+    });
+
     //Delete single customer device info
     app.delete("/deleteDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
@@ -750,6 +802,15 @@ async function run() {
       const email = req.params.email;
       const query = { email };
       const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
+     //get single customer total loan info
+     app.get("/totalLoan/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await giveLoanCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -857,6 +918,8 @@ async function run() {
       }
     });
 
+    
+
     //socket for chat
     // io.on("connection", (socket) => {
     //   socket.on("disconnect", () => { });
@@ -886,18 +949,6 @@ async function run() {
 
     //--------Niloy Back-End Start-------------//
 
-    // app.post("/pay-bills", async (req, res) => {
-    //   const query = req.body;
-    //   console.log(query);
-    //   const result = await payBillsCollection.insertOne(query);
-    //   res.send(result);
-    // });
-    // all donate api call in dashboard
-    app.get("/pay-bills", async (req, res) => {
-      const query = {};
-      const result = await payBillsCollection.find(query).toArray();
-      res.send(result);
-    });
     // Start All Pay bil Method
     app.post("/pay-bills", async (req, res) => {
       const payBills = req.body;
@@ -990,13 +1041,32 @@ async function run() {
     });
 
     // all pay  api call in dashboard
+    // app.get("/pay-bills", async (req, res) => {
+    //   // const query = {};
+    //   const search = req.query.search;
+    //   console.log(search);
+    //   let query = {};
+    //   if (search.length) {
+    //     query = {
+    //       $text: {
+    //         $search: search,
+    //       },
+    //     };
+    //   }
+
+    //   const result = await payBillsCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // all pay  api call in dashboard
     app.get("/pay-bills", async (req, res) => {
+      // const search = req.query.search;
+      // console.log(search);
       const query = {};
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
     });
     // END All Pay bil Method
-
+   
     //--------Niloy Back-End End-------------//
   } finally {
   }
