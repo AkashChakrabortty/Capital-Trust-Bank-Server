@@ -756,6 +756,7 @@ async function run() {
 
      //accept loan request
      app.post("/acceptLoanReq", async (req, res) => {
+      const info = req.body;
       const loanAmount= parseFloat(info.package.split('-')[0].split('$')[1]);
       const year = parseFloat(info.package.split('-')[1].split(' ')[0]);
       // const totalLoanAmount = parseFloat(loanAmount*year*0.1)
@@ -765,7 +766,9 @@ async function run() {
         $set: {
           availableAmount: parseFloat(previousAmount.availableAmount) + parseFloat(loanAmount)
         }
+
       } 
+      
       const increaseLoanApplierMoney = await allAccountsCollection.updateOne(filter,updateDoc);
       const deleteLoanReq = await applicantsCollection.deleteOne({email:info.email});
       const insertApproveLoan = await giveLoanCollection.insertOne(info)
