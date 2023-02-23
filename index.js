@@ -177,6 +177,9 @@ async function run() {
     const exchangesCollection = client
       .db("capital-trust-bank")
       .collection("exchange");
+    const accountCollection = client
+      .db("capital-trust-bank")
+      .collection("account");
 
     /* ------- Rakib Khan Code Start ------ */
     // save users to database
@@ -217,12 +220,13 @@ async function run() {
       console.log(result);
     });
     /* ------- Rakib Khan Code End ------ */
-
     /*==============Start Emon Backend Code  ============*/
-    // const giveChequeBookCollection = client
-    //   .db("capital-trust-bank")
-    //   .collection("giveChequeBook");
-
+    //slider data
+    app.get("/emergencyServices", async (req, res) => {
+      const query = {};
+      const result = await emergencyServiceCollection.find(query).toArray();
+      res.send(result);
+    });
     // applier for credit card
     app.post("/emgyServiceReceiver", async (req, res) => {
       const serviceReceiver = req.body;
@@ -372,7 +376,16 @@ async function run() {
 
     // all donate api call in dashboard
     app.get("/donate", async (req, res) => {
-      const query = {};
+      const search = req.query.search;
+      console.log(search);
+      let query = {};
+      if (search.length) {
+        query = {
+          $text: {
+            $search: search,
+          },
+        };
+      }
       const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
@@ -408,7 +421,7 @@ async function run() {
     });
     //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
-      const query = {};
+      const query = { approve: false };
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
@@ -493,6 +506,29 @@ async function run() {
     app.post("/depositWithdraw", async (req, res) => {
       const applicant = req.body;
       const result = await depositWithdrawCollection.insertOne(applicant);
+      //insert deposit amount
+      const filter = { email: applicant.email, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(filter);
+      let updateDoc;
+      if (applicant.type === "deposit") {
+        updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) +
+              parseFloat(applicant.deposit),
+          },
+        };
+      } else {
+        updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) -
+              parseFloat(applicant.withdraw),
+          },
+        };
+      }
+
+      const deposit = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
     app.get("/loans", async (req, res) => {
@@ -652,7 +688,6 @@ async function run() {
       const query = { approve: true };
       const info = await allAccountsCollection.find(query).toArray();
       const user = await usersCollection.find({}).toArray();
-
       let result = [];
       info.map((singleInfo) => {
         user.map((singleUser) => {
@@ -776,7 +811,9 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let allChatInfo = await chatInfoCollection
+        .find({ senderEmail: { $ne: "admin@gmail.com" } })
+        .toArray();
       let emailMap = {};
       allChatInfo = allChatInfo.filter((obj) => {
         if (!emailMap[obj.senderEmail]) {
@@ -786,6 +823,46 @@ async function run() {
         return false;
       });
       res.send(allChatInfo);
+    });
+
+    app.post("/sentMoney", async (req, res) => {
+      const info = req.body;
+      const filterReceiver = { accountId: info.id, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(
+        filterReceiver
+      );
+
+      if (previousAmount) {
+        const filter = { accountId: info.id, approve: true };
+        const updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) +
+              parseFloat(info.amount),
+          },
+        };
+        const increaseReceiverMoney = await allAccountsCollection.updateOne(
+          filter,
+          updateDoc
+        );
+
+        const filter1 = { email: info.senderEmail };
+        const previousAmount1 = await allAccountsCollection.findOne(filter1);
+        const updateDoc1 = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount1.availableAmount) -
+              parseFloat(info.amount),
+          },
+        };
+        const decreaseReceiverMoney = await allAccountsCollection.updateOne(
+          filter1,
+          updateDoc1
+        );
+        res.send({ isSuccessful: true });
+      } else {
+        res.send({ isSuccessful: false });
+      }
     });
 
     //socket for chat
@@ -817,18 +894,6 @@ async function run() {
 
     //--------Niloy Back-End Start-------------//
 
-    // app.post("/pay-bills", async (req, res) => {
-    //   const query = req.body;
-    //   console.log(query);
-    //   const result = await payBillsCollection.insertOne(query);
-    //   res.send(result);
-    // });
-    // all donate api call in dashboard
-    app.get("/pay-bills", async (req, res) => {
-      const query = {};
-      const result = await payBillsCollection.find(query).toArray();
-      res.send(result);
-    });
     // Start All Pay bil Method
     app.post("/pay-bills", async (req, res) => {
       const payBills = req.body;
@@ -921,7 +986,26 @@ async function run() {
     });
 
     // all pay  api call in dashboard
+    // app.get("/pay-bills", async (req, res) => {
+    //   // const query = {};
+    //   const search = req.query.search;
+    //   console.log(search);
+    //   let query = {};
+    //   if (search.length) {
+    //     query = {
+    //       $text: {
+    //         $search: search,
+    //       },
+    //     };
+    //   }
+
+    //   const result = await payBillsCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // all pay  api call in dashboard
     app.get("/pay-bills", async (req, res) => {
+      // const search = req.query.search;
+      // console.log(search);
       const query = {};
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
