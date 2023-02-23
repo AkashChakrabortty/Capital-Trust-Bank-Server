@@ -748,6 +748,7 @@ async function run() {
 
      //accept loan request
      app.post("/acceptLoanReq", async (req, res) => {
+      const info = req.body;
       const loanAmount= parseFloat(info.package.split('-')[0].split('$')[1]);
       const year = parseFloat(info.package.split('-')[1].split(' ')[0]);
       // const totalLoanAmount = parseFloat(loanAmount*year*0.1)
