@@ -1115,7 +1115,7 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Capital Trust Bank server is running v6");
+  res.send("Capital Trust Bank server is running v7");
 });
 app.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
