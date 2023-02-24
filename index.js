@@ -165,6 +165,12 @@ async function run() {
     const giveCardCollection = client
       .db("capital-trust-bank")
       .collection("giveCard");
+    const giveLoanCollection = client
+      .db("capital-trust-bank")
+      .collection("giveLoan");
+    const giveInsuranceCollection = client
+      .db("capital-trust-bank")
+      .collection("giveInsurance");
     const chatNotificationCollection = client
       .db("capital-trust-bank")
       .collection("chatNotification");
@@ -177,6 +183,9 @@ async function run() {
     const exchangesCollection = client
       .db("capital-trust-bank")
       .collection("exchange");
+    const accountCollection = client
+      .db("capital-trust-bank")
+      .collection("account");
 
     /* ------- Rakib Khan Code Start ------ */
     // save users to database
@@ -217,8 +226,23 @@ async function run() {
       console.log(result);
     });
     /* ------- Rakib Khan Code End ------ */
-
     /*==============Start Emon Backend Code  ============*/
+
+    app.get("/my-bills/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email, paid: "true" };
+      const result = await payBillsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/my-donate/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      const query = { donarEmail: email };
+      const result = await donateCollection.find(query).toArray();
+      res.send(result);
+    });
+
     //slider data
     app.get("/emergencyServices", async (req, res) => {
       const query = {};
@@ -374,7 +398,16 @@ async function run() {
 
     // all donate api call in dashboard
     app.get("/donate", async (req, res) => {
-      const query = {};
+      const search = req.query.search;
+      console.log(search);
+      let query = {};
+      if (search.length) {
+        query = {
+          $text: {
+            $search: search,
+          },
+        };
+      }
       const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
@@ -410,7 +443,7 @@ async function run() {
     });
     //read data for emergency service req slider
     app.get("/bankAccounts", async (req, res) => {
-      const query = {};
+      const query = { approve: false };
       const result = await allAccountsCollection.find(query).toArray();
       res.send(result);
     });
@@ -495,6 +528,29 @@ async function run() {
     app.post("/depositWithdraw", async (req, res) => {
       const applicant = req.body;
       const result = await depositWithdrawCollection.insertOne(applicant);
+      //insert deposit amount
+      const filter = { email: applicant.email, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(filter);
+      let updateDoc;
+      if (applicant.type === "deposit") {
+        updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) +
+              parseFloat(applicant.deposit),
+          },
+        };
+      } else {
+        updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) -
+              parseFloat(applicant.withdraw),
+          },
+        };
+      }
+
+      const deposit = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
     app.get("/loans", async (req, res) => {
@@ -591,6 +647,20 @@ async function run() {
       };
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(apply);
+      //1% rate months
+      setInterval(async () => {
+        const filter = { email: email, approve: true };
+        const user = await allAccountsCollection.findOne(filter);
+        const rateValue = parseFloat(user.availableAmount) * (1 / 100);
+        const updateDoc = {
+          $set: {
+            availableAmount: (
+              parseFloat(user.availableAmount) - rateValue
+            ).toFixed(2),
+          },
+        };
+        const result = await allAccountsCollection.updateOne(filter, updateDoc);
+      }, 2629800000);
     });
 
     //accept card req
@@ -654,7 +724,6 @@ async function run() {
       const query = { approve: true };
       const info = await allAccountsCollection.find(query).toArray();
       const user = await usersCollection.find({}).toArray();
-
       let result = [];
       info.map((singleInfo) => {
         user.map((singleUser) => {
@@ -664,6 +733,14 @@ async function run() {
           }
         });
       });
+      res.send(result);
+    });
+
+    //Delete loan req
+    app.delete("/deleteLoanReq/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await applicantsCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -698,6 +775,32 @@ async function run() {
       }
     });
 
+    //accept loan request
+    app.post("/acceptLoanReq", async (req, res) => {
+      const info = req.body;
+      const loanAmount = parseFloat(info.package.split("-")[0].split("$")[1]);
+      const year = parseFloat(info.package.split("-")[1].split(" ")[0]);
+      // const totalLoanAmount = parseFloat(loanAmount*year*0.1)
+      const filter = { email: info.email, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(filter);
+      const updateDoc = {
+        $set: {
+          availableAmount:
+            parseFloat(previousAmount.availableAmount) + parseFloat(loanAmount),
+        },
+      };
+
+      const increaseLoanApplierMoney = await allAccountsCollection.updateOne(
+        filter,
+        updateDoc
+      );
+      const deleteLoanReq = await applicantsCollection.deleteOne({
+        email: info.email,
+      });
+      const insertApproveLoan = await giveLoanCollection.insertOne(info);
+      res.send(insertApproveLoan);
+    });
+
     //Delete single customer device info
     app.delete("/deleteDeviceInfo/:email", async (req, res) => {
       const email = req.params.email;
@@ -725,6 +828,14 @@ async function run() {
       const email = req.params.email;
       const query = { email };
       const result = await deviceInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get single customer total loan info
+    app.get("/totalLoan/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await giveLoanCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -778,7 +889,9 @@ async function run() {
 
     //get customers chat info
     app.get("/getAllCustomersChat", async (req, res) => {
-      let allChatInfo = await chatInfoCollection.find({}).toArray();
+      let allChatInfo = await chatInfoCollection
+        .find({ senderEmail: { $ne: "admin@gmail.com" } })
+        .toArray();
       let emailMap = {};
       allChatInfo = allChatInfo.filter((obj) => {
         if (!emailMap[obj.senderEmail]) {
@@ -788,6 +901,46 @@ async function run() {
         return false;
       });
       res.send(allChatInfo);
+    });
+
+    app.post("/sentMoney", async (req, res) => {
+      const info = req.body;
+      const filterReceiver = { accountId: info.id, approve: true };
+      const previousAmount = await allAccountsCollection.findOne(
+        filterReceiver
+      );
+
+      if (previousAmount) {
+        const filter = { accountId: info.id, approve: true };
+        const updateDoc = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount.availableAmount) +
+              parseFloat(info.amount),
+          },
+        };
+        const increaseReceiverMoney = await allAccountsCollection.updateOne(
+          filter,
+          updateDoc
+        );
+
+        const filter1 = { email: info.senderEmail };
+        const previousAmount1 = await allAccountsCollection.findOne(filter1);
+        const updateDoc1 = {
+          $set: {
+            availableAmount:
+              parseFloat(previousAmount1.availableAmount) -
+              parseFloat(info.amount),
+          },
+        };
+        const decreaseReceiverMoney = await allAccountsCollection.updateOne(
+          filter1,
+          updateDoc1
+        );
+        res.send({ isSuccessful: true });
+      } else {
+        res.send({ isSuccessful: false });
+      }
     });
 
     //socket for chat
@@ -819,25 +972,13 @@ async function run() {
 
     //--------Niloy Back-End Start-------------//
 
-    // app.post("/pay-bills", async (req, res) => {
-    //   const query = req.body;
-    //   console.log(query);
-    //   const result = await payBillsCollection.insertOne(query);
-    //   res.send(result);
-    // });
-    // all donate api call in dashboard
-    app.get("/pay-bills", async (req, res) => {
-      const query = {};
-      const result = await payBillsCollection.find(query).toArray();
-      res.send(result);
-    });
     // Start All Pay bil Method
     app.post("/pay-bills", async (req, res) => {
       const payBills = req.body;
       console.log(payBills);
-      const { name, phnNumber, amount, billType, billSNumber } = payBills;
+      const { name, phnNumber, email, amount, billType, billSNumber } =
+        payBills;
       const transactionId = new ObjectId().toString().substring(0, 6);
-
       const data = {
         total_amount: amount,
         currency: "BDT",
@@ -851,7 +992,7 @@ async function run() {
         product_category: billType,
         product_profile: "general",
         cus_name: name,
-        cus_email: "demon@gmail.com",
+        cus_email: "emon@gmail.com",
         cus_add1: "Dhaka",
         cus_add2: "Dhaka",
         cus_city: "Dhaka",
@@ -923,12 +1064,49 @@ async function run() {
     });
 
     // all pay  api call in dashboard
+    // app.get("/pay-bills", async (req, res) => {
+    //   // const query = {};
+    //   const search = req.query.search;
+    //   console.log(search);
+    //   let query = {};
+    //   if (search.length) {
+    //     query = {
+    //       $text: {
+    //         $search: search,
+    //       },
+    //     };
+    //   }
+
+    //   const result = await payBillsCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+    // all pay  api call in dashboard
     app.get("/pay-bills", async (req, res) => {
+      // const search = req.query.search;
+      // console.log(search);
       const query = {};
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
     });
     // END All Pay bil Method
+
+    //Insurance Accept Request
+    app.post("/acceptInsuranceReq", async (req, res) => {
+      const id = req.body._id;
+      const info = req.body;
+      const filter = { _id: ObjectId(id) };
+      const giveInsurance = await giveInsuranceCollection.insertOne(info);
+      const result = await insuranceCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //Insurance Delete Request
+    app.delete("/deleteInsuranceReq", async (req, res) => {
+      const id = req.body.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await insuranceCollection.deleteOne(filter);
+      res.send(result);
+    });
 
     //--------Niloy Back-End End-------------//
   } finally {
@@ -937,7 +1115,7 @@ async function run() {
 run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
-  res.send("Capital Trust Bank server is running v6");
+  res.send("Capital Trust Bank server is running v7");
 });
 app.listen(port, () => {
   console.log(`Capital Trust Bank Server is running on port ${port}`);
