@@ -226,11 +226,26 @@ async function run() {
     /*==============Start Emon Backend Code  ============*/
 
     // email wise bill data show in ui
+    // app.get("/my-bills/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   console.log(email);
+    //   const query = { email: email };
+    //   const result = await payBillsCollection.find(query);
+    //   res.send(result);
+    // });
+
     app.get("/my-bills/:email", async (req, res) => {
       const email = req.params.email;
+      const query = { email: email, paid: "true" };
+      const result = await payBillsCollection.find(query).toArray();
+      res.send(result);
+    });
+    
+    app.get("/my-donate/:email", async (req, res) => {
+      const email = req.params.email;
       console.log(email);
-      const query = { email: email };
-      const result = await payBillsCollection.find(query);
+      const query = { donarEmail: email };
+      const result = await donateCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -967,9 +982,9 @@ async function run() {
     app.post("/pay-bills", async (req, res) => {
       const payBills = req.body;
       console.log(payBills);
-      const { name, phnNumber, amount, billType, billSNumber } = payBills;
+      const { name, phnNumber, email, amount, billType, billSNumber } =
+        payBills;
       const transactionId = new ObjectId().toString().substring(0, 6);
-
       const data = {
         total_amount: amount,
         currency: "BDT",
