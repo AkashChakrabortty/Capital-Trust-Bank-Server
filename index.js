@@ -225,22 +225,13 @@ async function run() {
     /* ------- Rakib Khan Code End ------ */
     /*==============Start Emon Backend Code  ============*/
 
-    // email wise bill data show in ui
-    // app.get("/my-bills/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   console.log(email);
-    //   const query = { email: email };
-    //   const result = await payBillsCollection.find(query);
-    //   res.send(result);
-    // });
-
     app.get("/my-bills/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email, paid: "true" };
       const result = await payBillsCollection.find(query).toArray();
       res.send(result);
     });
-    
+
     app.get("/my-donate/:email", async (req, res) => {
       const email = req.params.email;
       console.log(email);
