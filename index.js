@@ -224,6 +224,16 @@ async function run() {
     });
     /* ------- Rakib Khan Code End ------ */
     /*==============Start Emon Backend Code  ============*/
+
+    // email wise bill data show in ui
+    app.get("/my-bills/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      const query = { email: email };
+      const result = await payBillsCollection.find(query);
+      res.send(result);
+    });
+
     //slider data
     app.get("/emergencyServices", async (req, res) => {
       const query = {};
@@ -629,17 +639,19 @@ async function run() {
       const apply = await allAccountsCollection.updateOne(filter, updateDoc);
       res.send(apply);
       //1% rate months
-     setInterval(async()=>{
-      const filter = {email: email,approve:true}
-      const user =  await allAccountsCollection.findOne(filter);
-      const rateValue = parseFloat(user.availableAmount) * (1/100);
-      const updateDoc = {
-        $set: {
-          availableAmount:  (parseFloat(user.availableAmount) - rateValue).toFixed(2)
-        }
-       }
-       const result =  await allAccountsCollection.updateOne(filter,updateDoc);
-    },2629800000)
+      setInterval(async () => {
+        const filter = { email: email, approve: true };
+        const user = await allAccountsCollection.findOne(filter);
+        const rateValue = parseFloat(user.availableAmount) * (1 / 100);
+        const updateDoc = {
+          $set: {
+            availableAmount: (
+              parseFloat(user.availableAmount) - rateValue
+            ).toFixed(2),
+          },
+        };
+        const result = await allAccountsCollection.updateOne(filter, updateDoc);
+      }, 2629800000);
     });
 
     //accept card req
@@ -715,8 +727,8 @@ async function run() {
       res.send(result);
     });
 
-     //Delete loan req
-     app.delete("/deleteLoanReq/:email", async (req, res) => {
+    //Delete loan req
+    app.delete("/deleteLoanReq/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const result = await applicantsCollection.deleteOne(filter);
@@ -754,25 +766,30 @@ async function run() {
       }
     });
 
-     //accept loan request
-     app.post("/acceptLoanReq", async (req, res) => {
+    //accept loan request
+    app.post("/acceptLoanReq", async (req, res) => {
       const info = req.body;
-      const loanAmount= parseFloat(info.package.split('-')[0].split('$')[1]);
-      const year = parseFloat(info.package.split('-')[1].split(' ')[0]);
+      const loanAmount = parseFloat(info.package.split("-")[0].split("$")[1]);
+      const year = parseFloat(info.package.split("-")[1].split(" ")[0]);
       // const totalLoanAmount = parseFloat(loanAmount*year*0.1)
-      const filter = {email:info.email,approve:true};
+      const filter = { email: info.email, approve: true };
       const previousAmount = await allAccountsCollection.findOne(filter);
       const updateDoc = {
         $set: {
-          availableAmount: parseFloat(previousAmount.availableAmount) + parseFloat(loanAmount)
-        }
+          availableAmount:
+            parseFloat(previousAmount.availableAmount) + parseFloat(loanAmount),
+        },
+      };
 
-      } 
-      
-      const increaseLoanApplierMoney = await allAccountsCollection.updateOne(filter,updateDoc);
-      const deleteLoanReq = await applicantsCollection.deleteOne({email:info.email});
-      const insertApproveLoan = await giveLoanCollection.insertOne(info)
-      res.send(insertApproveLoan)
+      const increaseLoanApplierMoney = await allAccountsCollection.updateOne(
+        filter,
+        updateDoc
+      );
+      const deleteLoanReq = await applicantsCollection.deleteOne({
+        email: info.email,
+      });
+      const insertApproveLoan = await giveLoanCollection.insertOne(info);
+      res.send(insertApproveLoan);
     });
 
     //Delete single customer device info
@@ -805,9 +822,8 @@ async function run() {
       res.send(result);
     });
 
-
-     //get single customer total loan info
-     app.get("/totalLoan/:email", async (req, res) => {
+    //get single customer total loan info
+    app.get("/totalLoan/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await giveLoanCollection.find(query).toArray();
@@ -918,8 +934,6 @@ async function run() {
       }
     });
 
-    
-
     //socket for chat
     // io.on("connection", (socket) => {
     //   socket.on("disconnect", () => { });
@@ -969,7 +983,7 @@ async function run() {
         product_category: billType,
         product_profile: "general",
         cus_name: name,
-        cus_email: "demon@gmail.com",
+        cus_email: "emon@gmail.com",
         cus_add1: "Dhaka",
         cus_add2: "Dhaka",
         cus_city: "Dhaka",
@@ -1066,7 +1080,7 @@ async function run() {
       res.send(result);
     });
     // END All Pay bil Method
-   
+
     //--------Niloy Back-End End-------------//
   } finally {
   }
