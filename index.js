@@ -168,6 +168,9 @@ async function run() {
     const giveLoanCollection = client
       .db("capital-trust-bank")
       .collection("giveLoan");
+    const giveInsuranceCollection = client
+      .db("capital-trust-bank")
+      .collection("giveInsurance");
     const chatNotificationCollection = client
       .db("capital-trust-bank")
       .collection("chatNotification");
@@ -1086,6 +1089,24 @@ async function run() {
       res.send(result);
     });
     // END All Pay bil Method
+
+    //Insurance Accept Request
+    app.post("/acceptInsuranceReq", async (req, res) => {
+      const id = req.body._id;
+      const info = req.body;
+      const filter = { _id: ObjectId(id) };
+      const giveInsurance = await giveInsuranceCollection.insertOne(info);
+      const result = await insuranceCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //Insurance Delete Request
+    app.delete("/deleteInsuranceReq", async (req, res) => {
+      const id = req.body.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await insuranceCollection.deleteOne(filter);
+      res.send(result);
+    });
 
     //--------Niloy Back-End End-------------//
   } finally {
